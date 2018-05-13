@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+option go_package = "github.com/gambarini/grpcdemo/contact/pb";
+
+package pb;
+
+service Contacts {
+
+    rpc StoreContacts(stream Contact) returns (stream Contact) {}
+    rpc ListContacts(Contact) returns (stream Contact) {}
+
+}
+
+message Contact {
+
+    string id = 1;
+    string name = 2;
+    Type type = 3;
+
+}
+
+enum Type {
+    ADMIN = 0;
+    STANDARD = 1;
+    EXTERNAL = 2;
+}

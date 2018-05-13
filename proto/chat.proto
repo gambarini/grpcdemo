@@ -1,0 +1,32 @@
+
+syntax = "proto3";
+
+option go_package = "github.com/gambarini/grpcdemo/chat/pb";
+
+package pb;
+
+service Chat {
+
+    rpc StartChat(stream Message) returns (stream Message) {}
+
+}
+
+message Person {
+
+    int32 id = 1;
+    string name = 2;
+}
+
+enum Type {
+    CONNECT = 0;
+    DISCONNECT = 1;
+    TEXT = 2;
+}
+
+message Message {
+
+    string text = 1;
+    Person person = 2;
+    Person to_person = 3;
+    Type type = 4;
+}
