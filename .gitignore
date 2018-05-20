@@ -30,4 +30,4 @@ _testmain.go
 .idea/workspace.xml
 
 /js_client
-*/pb
+*.pb.go

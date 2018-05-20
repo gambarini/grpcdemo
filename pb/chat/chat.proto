@@ -1,7 +1,7 @@
 
 syntax = "proto3";
 
-option go_package = "github.com/gambarini/grpcdemo/chat/pb";
+option go_package = "github.com/gambarini/grpcdemo/pb/chat";
 
 package pb;
 
@@ -11,13 +11,8 @@ service Chat {
 
 }
 
-message Person {
 
-    int32 id = 1;
-    string name = 2;
-}
-
-enum Type {
+enum MessageType {
     CONNECT = 0;
     DISCONNECT = 1;
     TEXT = 2;
@@ -26,7 +21,7 @@ enum Type {
 message Message {
 
     string text = 1;
-    Person person = 2;
-    Person to_person = 3;
-    Type type = 4;
+    string from_contact_id = 2;
+    string to_contact_id = 3;
+    MessageType type = 4;
 }

@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/gambarini/grpcdemo/contact/pb";
+option go_package = "github.com/gambarini/grpcdemo/pb/contact";
 
 package pb;
 
@@ -15,11 +15,11 @@ message Contact {
 
     string id = 1;
     string name = 2;
-    Type type = 3;
+    ContactType type = 3;
 
 }
 
-enum Type {
+enum ContactType {
     ADMIN = 0;
     STANDARD = 1;
     EXTERNAL = 2;

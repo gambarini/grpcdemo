@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 
+echo Installing gen go
+go get -u github.com/golang/protobuf/protoc-gen-go
+
 echo Generating chat golang proto files
-mkdir -p chat/pb
-protoc ./proto/chat.proto -I. --go_out=plugins=grpc:$GOPATH/src
+protoc ./pb/chat/chat.proto -I. --go_out=plugins=grpc:$GOPATH/src
 
 echo Generating contact golang proto files
-mkdir -p contact/pb
-protoc ./proto/contact.proto -I. --go_out=plugins=grpc:$GOPATH/src
+protoc ./pb/contact/contact.proto -I. --go_out=plugins=grpc:$GOPATH/src
 
 #echo Generating chat javascript proto files
 #mkdir -p js_client
