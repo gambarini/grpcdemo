@@ -9,7 +9,7 @@ metadata:
 spec:
   type: NodePort
   ports:
-  - port: 80
+  - port: 30001
     nodePort: 30001
     targetPort: 30001
     name: http
@@ -45,4 +45,4 @@ spec:
         args:
         - servers/chat/main.go
         ports:
-        - containerPort: 9000
+        - containerPort: 30001

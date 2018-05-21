@@ -14,7 +14,7 @@ import (
 	"errors"
 )
 
-const(
+const (
 	endKeyword = "/end"
 )
 
@@ -22,13 +22,11 @@ var (
 	ErrDisconnect = errors.New("disconnecting")
 )
 
-
 func main() {
 
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Println("Enter your ID:")
-
 
 	ID := readInput(reader)
 
@@ -38,7 +36,7 @@ func main() {
 
 	ctx := context.TODO()
 
-	chatClient, conn := clients.NewChatClient()
+	chatClient, conn := clients.NewExternalChatClient()
 
 	defer conn.Close()
 
@@ -53,10 +51,10 @@ func main() {
 	go Receive(wait, stream)
 
 	err = stream.Send(&chat.Message{
-		Text: "",
+		Text:          "",
 		FromContactId: ID,
-		ToContactId: toID,
-		Type: chat.MessageType_CONNECT,
+		ToContactId:   toID,
+		Type:          chat.MessageType_CONNECT,
 	})
 
 	if err != nil {
@@ -82,7 +80,7 @@ func main() {
 
 	stream.CloseSend()
 
-	<- wait
+	<-wait
 
 }
 
@@ -98,10 +96,10 @@ func Send(stream chat.Chat_StartChatClient, text, ID, toID string) error {
 
 	default:
 		err = stream.Send(&chat.Message{
-			Text: text,
+			Text:          text,
 			FromContactId: ID,
-			ToContactId: toID,
-			Type: chat.MessageType_TEXT,
+			ToContactId:   toID,
+			Type:          chat.MessageType_TEXT,
 		})
 	}
 

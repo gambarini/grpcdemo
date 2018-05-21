@@ -6,28 +6,36 @@ import (
 )
 
 var (
-	streamStore = make(map[string]pb.Chat_StartChatServer)
 	ErrNoChatStreamForContact = errors.New("failed to get chat stream for contact")
 )
 
-func StoreChatStream(contactID string, chatStream pb.Chat_StartChatServer) {
+type DB struct {
+	streamStore map[string]pb.Chat_StartChatServer
+}
 
-	_, ok := streamStore[contactID]
+func NewDB() *DB {
+	return &DB{make(map[string]pb.Chat_StartChatServer)}
+
+}
+
+func (db *DB) StoreChatStream(contactID string, chatStream pb.Chat_StartChatServer) {
+
+	_, ok := db.streamStore[contactID]
 
 	if !ok {
-		streamStore[contactID] = chatStream
+		db.streamStore[contactID] = chatStream
 	}
 
 }
 
-func RemoveChatStream(contactID string) {
+func (db *DB) RemoveChatStream(contactID string) {
 
-	delete(streamStore, contactID)
+	delete(db.streamStore, contactID)
 }
 
-func GetChatStreamByContactID(contactID string) (chatStream pb.Chat_StartChatServer, err error) {
+func (db *DB) GetChatStreamByContactID(contactID string) (chatStream pb.Chat_StartChatServer, err error) {
 
-	chatStream, ok := streamStore[contactID]
+	chatStream, ok := db.streamStore[contactID]
 
 	if !ok {
 		return chatStream, ErrNoChatStreamForContact

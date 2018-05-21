@@ -7,14 +7,13 @@ import (
 	"github.com/gambarini/grpcdemo/clients"
 )
 
-
-func NewChatClient() (chatClient chatPb.ChatClient, conn *grpc.ClientConn) {
+func NewInternalChatClient() (chatClient chatPb.ChatClient, conn *grpc.ClientConn) {
 
 	var opts []grpc.DialOption
 
 	opts = append(opts, grpc.WithInsecure())
 
-	conn, err := grpc.Dial(clients.ChatDomain, opts...)
+	conn, err := grpc.Dial(clients.InternalChatServiceName, opts...)
 
 	if err != nil {
 		log.Fatalf("failed to dial Chat Service: %v", err)
@@ -23,4 +22,17 @@ func NewChatClient() (chatClient chatPb.ChatClient, conn *grpc.ClientConn) {
 	return chatPb.NewChatClient(conn), conn
 }
 
+func NewExternalChatClient() (chatClient chatPb.ChatClient, conn *grpc.ClientConn) {
 
+	var opts []grpc.DialOption
+
+	opts = append(opts, grpc.WithInsecure())
+
+	conn, err := grpc.Dial(clients.ExternalChatServiceDomain, opts...)
+
+	if err != nil {
+		log.Fatalf("failed to dial Chat Service: %v", err)
+	}
+
+	return chatPb.NewChatClient(conn), conn
+}
