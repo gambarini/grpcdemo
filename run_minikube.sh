@@ -10,13 +10,13 @@ docker build -t gambarini/grpc-demo .
 kubectl apply -f minikube/chat.yaml
 kubectl apply -f minikube/contact.yaml
 
-chat_url="$(minikube service chatsvc-service --url)"
+chat_url="$(minikube service chat-service --url)"
 echo chat-service on: ${chat_url}
 
-chat_url="$(minikube service contactsvc-service --url)"
+chat_url="$(minikube service contact-service --url)"
 echo contact-service on: ${chat_url}
 
-read -p "Press any key to stop serving... " -n1 -s
+read -p "Press any key to stop serving..." -n1 -s
 
 kubectl delete deployment chat
 kubectl delete service chat-service

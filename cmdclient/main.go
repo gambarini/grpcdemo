@@ -7,7 +7,7 @@ import (
 	"bufio"
 	"os"
 	"log"
-	"github.com/gambarini/grpcdemo/pb/chat"
+	"github.com/gambarini/grpcdemo/pb/chatpb"
 	"io"
 
 	"strings"
@@ -43,18 +43,18 @@ func main() {
 	stream, err := chatClient.StartChat(ctx)
 
 	if err != nil {
-		log.Fatalf("failed to start chatsvc: %v", err)
+		log.Fatalf("failed to start chat: %v", err)
 	}
 
 	wait := make(chan interface{})
 
 	go Receive(wait, stream)
 
-	err = stream.Send(&chat.Message{
+	err = stream.Send(&chatpb.Message{
 		Text:          "",
 		FromContactId: ID,
 		ToContactId:   toID,
-		Type:          chat.MessageType_CONNECT,
+		Type:          chatpb.MessageType_CONNECT,
 	})
 
 	if err != nil {
@@ -84,7 +84,7 @@ func main() {
 
 }
 
-func Send(stream chat.Chat_StartChatClient, text, ID, toID string) error {
+func Send(stream chatpb.Chat_StartChatClient, text, ID, toID string) error {
 
 	var err error
 
@@ -95,11 +95,11 @@ func Send(stream chat.Chat_StartChatClient, text, ID, toID string) error {
 		return ErrDisconnect
 
 	default:
-		err = stream.Send(&chat.Message{
+		err = stream.Send(&chatpb.Message{
 			Text:          text,
 			FromContactId: ID,
 			ToContactId:   toID,
-			Type:          chat.MessageType_TEXT,
+			Type:          chatpb.MessageType_TEXT,
 		})
 	}
 
@@ -110,7 +110,7 @@ func Send(stream chat.Chat_StartChatClient, text, ID, toID string) error {
 	return nil
 }
 
-func Receive(wait chan interface{}, stream chat.Chat_StartChatClient) {
+func Receive(wait chan interface{}, stream chatpb.Chat_StartChatClient) {
 
 	for {
 		msg, err := stream.Recv()

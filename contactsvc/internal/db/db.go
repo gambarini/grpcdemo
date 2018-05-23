@@ -1,15 +1,14 @@
 package db
 
 import (
-	pb "github.com/gambarini/grpcdemo/pb/contact"
+	"github.com/gambarini/grpcdemo/pb/contactpb"
 	"errors"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
-
 var (
-	ErrContactNotStored = errors.New("contactsvc is not stored")
+	ErrContactNotStored = errors.New("contact is not stored")
 )
 
 type DB struct {
@@ -25,19 +24,19 @@ func NewDB(session *mgo.Session) *DB {
 
 }
 
-func (db *DB) StoreContact(contact *pb.Contact) error {
+func (db *DB) StoreContact(contact *contactpb.Contact) error {
 
-	storeContacts := db.Session.DB("grpcdemo").C("contactsvc")
+	storeContacts := db.Session.DB("grpcdemo").C("contact")
 
 	return storeContacts.Insert(contact)
 
 }
 
-func (db *DB) FindContact(id string) (contact *pb.Contact, err error) {
+func (db *DB) FindContact(id string) (contact *contactpb.Contact, err error) {
 
-	storeContacts := db.Session.DB("grpcdemo").C("contactsvc")
+	storeContacts := db.Session.DB("grpcdemo").C("contact")
 
-	contact = &pb.Contact{}
+	contact = &contactpb.Contact{}
 	err = storeContacts.Find(bson.M{"id": id}).One(contact)
 
 	if err != nil {

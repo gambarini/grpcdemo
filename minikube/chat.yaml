@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: chatsvc-service
+  name: chat-service
   labels:
-    app: chatsvc
+    app: chat
     tier: backend
     phase: test
 spec:
@@ -14,7 +14,7 @@ spec:
     targetPort: 30001
     name: http
   selector:
-    app: chatsvc
+    app: chat
     tier: backend
     phase: test
 
@@ -23,26 +23,26 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: chatsvc
+  name: chat
 spec:
   selector:
     matchLabels:
-      app: chatsvc
+      app: chat
       tier: backend
       phase: test
   replicas: 1
   template:
     metadata:
       labels:
-        app: chatsvc
+        app: chat
         tier: backend
         phase: test
     spec:
       containers:
-      - name: chatsvc
+      - name: chat
         image: gambarini/grpc-demo
         imagePullPolicy: Never
         args:
-        - servers/chatsvc/main.go
+        - chatsvc/main.go
         ports:
         - containerPort: 30001

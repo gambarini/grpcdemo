@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	ErrNoChatStreamForContact = errors.New("failed to get chatsvc stream for contactsvc")
+	ErrNoChatStreamForContact = errors.New("failed to get chat stream for contact")
 )
 
 type DB struct {

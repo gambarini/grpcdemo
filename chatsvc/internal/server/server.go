@@ -45,7 +45,7 @@ func (server *ChatServer) StartChat(stream chatpb.Chat_StartChatServer) error {
 		contactsStream, err := server.ContactClient.StoreContacts(ctx)
 
 		if err != nil {
-			log.Printf("Error Storing contactsvc: %s", err)
+			log.Printf("Error Storing contact: %s", err)
 			server.DB.RemoveChatStream(streamContactID)
 			return err
 		}
@@ -57,7 +57,7 @@ func (server *ChatServer) StartChat(stream chatpb.Chat_StartChatServer) error {
 		})
 
 		if err != nil {
-			log.Printf("Error sending contactsvc: %s", err)
+			log.Printf("Error sending contact: %s", err)
 			server.DB.RemoveChatStream(streamContactID)
 			return err
 		}
@@ -82,7 +82,7 @@ func (server *ChatServer) StartChat(stream chatpb.Chat_StartChatServer) error {
 			toStream, err := server.DB.GetChatStreamByContactID(toStreamContactID)
 
 			if err != nil {
-				log.Printf("Failed to get contactsvc ID %s stream, %s", toStreamContactID, err)
+				log.Printf("Failed to get contact ID %s stream, %s", toStreamContactID, err)
 			} else {
 				toStream.Send(msg)
 			}
