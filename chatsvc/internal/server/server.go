@@ -1,20 +1,22 @@
 package server
 
 import (
-	pb "github.com/gambarini/grpcdemo/pb/chat"
-	contactPb "github.com/gambarini/grpcdemo/pb/contact"
+	"github.com/gambarini/grpcdemo/pb/chatpb"
+	"github.com/gambarini/grpcdemo/pb/contactpb"
 	"io"
-	"github.com/gambarini/grpcdemo/servers/chat/internal/db"
+	"github.com/gambarini/grpcdemo/chatsvc/internal/db"
 	"log"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 type ChatServer struct {
-	DB            *db.DB
-	ContactClient contactPb.ContactsClient
+	DB                *db.DB
+	ContactClient     contactpb.ContactsClient
+	ContactClientConn *grpc.ClientConn
 }
 
-func (server *ChatServer) StartChat(stream pb.Chat_StartChatServer) error {
+func (server *ChatServer) StartChat(stream chatpb.Chat_StartChatServer) error {
 
 	var streamContactID string
 
@@ -43,19 +45,19 @@ func (server *ChatServer) StartChat(stream pb.Chat_StartChatServer) error {
 		contactsStream, err := server.ContactClient.StoreContacts(ctx)
 
 		if err != nil {
-			log.Printf("Error Storing contact: %s", err)
+			log.Printf("Error Storing contactsvc: %s", err)
 			server.DB.RemoveChatStream(streamContactID)
 			return err
 		}
 
-		err = contactsStream.Send(&contactPb.Contact{
+		err = contactsStream.Send(&contactpb.Contact{
 			Id:   streamContactID,
-			Type: contactPb.ContactType_STANDARD,
+			Type: contactpb.ContactType_STANDARD,
 			Name: "NONE",
 		})
 
 		if err != nil {
-			log.Printf("Error sending contact: %s", err)
+			log.Printf("Error sending contactsvc: %s", err)
 			server.DB.RemoveChatStream(streamContactID)
 			return err
 		}
@@ -64,23 +66,23 @@ func (server *ChatServer) StartChat(stream pb.Chat_StartChatServer) error {
 
 		switch msg.Type {
 
-		case pb.MessageType_CONNECT:
+		case chatpb.MessageType_CONNECT:
 
 			server.DB.StoreChatStream(streamContactID, stream)
 
-		case pb.MessageType_DISCONNECT:
+		case chatpb.MessageType_DISCONNECT:
 
 			server.DB.RemoveChatStream(streamContactID)
 			return io.EOF
 
-		case pb.MessageType_TEXT:
+		case chatpb.MessageType_TEXT:
 
 			toStreamContactID := msg.ToContactId
 
 			toStream, err := server.DB.GetChatStreamByContactID(toStreamContactID)
 
 			if err != nil {
-				log.Printf("Failed to get contact ID %s stream, %s", toStreamContactID, err)
+				log.Printf("Failed to get contactsvc ID %s stream, %s", toStreamContactID, err)
 			} else {
 				toStream.Send(msg)
 			}

@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/gambarini/grpcdemo/pb/contact";
+option go_package = "github.com/gambarini/grpcdemo/pb/contactpb";
 
 package pb;
 

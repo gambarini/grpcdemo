@@ -1,8 +1,8 @@
 package server
 
-import pb "github.com/gambarini/grpcdemo/pb/contact"
 import (
-	"github.com/gambarini/grpcdemo/servers/contact/internal/db"
+	"github.com/gambarini/grpcdemo/pb/contactpb"
+	"github.com/gambarini/grpcdemo/contactsvc/internal/db"
 	"io"
 	"log"
 )
@@ -11,7 +11,7 @@ type ContactsServer struct {
 	DB *db.DB
 }
 
-func (server *ContactsServer) StoreContacts(stream pb.Contacts_StoreContactsServer) error {
+func (server *ContactsServer) StoreContacts(stream contactpb.Contacts_StoreContactsServer) error {
 
 	for {
 
@@ -34,7 +34,7 @@ func (server *ContactsServer) StoreContacts(stream pb.Contacts_StoreContactsServ
 	}
 }
 
-func (server *ContactsServer) ListContacts(filterContact *pb.Contact, stream pb.Contacts_ListContactsServer) error {
+func (server *ContactsServer) ListContacts(filterContact *contactpb.Contact, stream contactpb.Contacts_ListContactsServer) error {
 
 	contact, err := server.DB.FindContact(filterContact.Id)
 

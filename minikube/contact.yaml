@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: contact-service
+  name: contactsvc-service
   labels:
-    app: contact
+    app: contactsvc
     tier: backend
     phase: test
 spec:
@@ -14,7 +14,7 @@ spec:
     targetPort: 30002
     name: http
   selector:
-    app: contact
+    app: contactsvc
     tier: backend
     phase: test
 
@@ -23,26 +23,26 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: contact
+  name: contactsvc
 spec:
   selector:
     matchLabels:
-      app: contact
+      app: contactsvc
       tier: backend
       phase: test
   replicas: 1
   template:
     metadata:
       labels:
-        app: contact
+        app: contactsvc
         tier: backend
         phase: test
     spec:
       containers:
-      - name: chat
+      - name: chatsvc
         image: gambarini/grpc-demo
         imagePullPolicy: Never
         args:
-        - servers/contact/main.go
+        - servers/contactsvc/main.go
         ports:
         - containerPort: 30002

@@ -3,26 +3,29 @@ package chat
 import (
 	"google.golang.org/grpc"
 	"log"
-	chatPb "github.com/gambarini/grpcdemo/pb/chat"
+	"github.com/gambarini/grpcdemo/pb/chatpb"
 	"github.com/gambarini/grpcdemo/clients"
+	"fmt"
 )
 
-func NewInternalChatClient() (chatClient chatPb.ChatClient, conn *grpc.ClientConn) {
+func NewInternalChatClient() (chatClient chatpb.ChatClient, conn *grpc.ClientConn, err error) {
 
 	var opts []grpc.DialOption
 
 	opts = append(opts, grpc.WithInsecure())
 
-	conn, err := grpc.Dial(clients.InternalChatServiceName, opts...)
+	conn, err = grpc.Dial(clients.InternalChatServiceName, opts...)
 
 	if err != nil {
-		log.Fatalf("failed to dial Chat Service: %v", err)
+		return chatClient, conn, fmt.Errorf("failed to dial to Chat Service: %v", err)
 	}
 
-	return chatPb.NewChatClient(conn), conn
+	chatClient = chatpb.NewChatClient(conn)
+
+	return chatClient, conn, nil
 }
 
-func NewExternalChatClient() (chatClient chatPb.ChatClient, conn *grpc.ClientConn) {
+func NewExternalChatClient() (chatClient chatpb.ChatClient, conn *grpc.ClientConn) {
 
 	var opts []grpc.DialOption
 
@@ -34,5 +37,5 @@ func NewExternalChatClient() (chatClient chatPb.ChatClient, conn *grpc.ClientCon
 		log.Fatalf("failed to dial Chat Service: %v", err)
 	}
 
-	return chatPb.NewChatClient(conn), conn
+	return chatpb.NewChatClient(conn), conn
 }

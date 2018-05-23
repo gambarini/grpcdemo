@@ -43,7 +43,7 @@ func main() {
 	stream, err := chatClient.StartChat(ctx)
 
 	if err != nil {
-		log.Fatalf("failed to start chat: %v", err)
+		log.Fatalf("failed to start chatsvc: %v", err)
 	}
 
 	wait := make(chan interface{})
