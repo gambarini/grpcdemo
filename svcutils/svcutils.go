@@ -19,7 +19,7 @@ type MainServer struct {
 	Initialization InitializationFunc
 	CleanUp        CleanUpFunc
 	GRPCServer     *grpc.Server
-	ServerObjects  interface{}
+	Server         interface{}
 	signalChannel  chan os.Signal
 }
 

@@ -4,9 +4,8 @@ import (
 	"github.com/gambarini/grpcdemo/pb/contactpb"
 	"github.com/gambarini/grpcdemo/contactsvc/internal/server"
 	"github.com/gambarini/grpcdemo/contactsvc/internal/db"
-	"gopkg.in/mgo.v2"
 	"github.com/gambarini/grpcdemo/svcutils"
-	"fmt"
+	"github.com/gambarini/grpcdemo/dbutils"
 )
 
 func main() {
@@ -23,10 +22,10 @@ func main() {
 
 func initialization(mainServer *svcutils.MainServer) (err error) {
 
-	session, err := mgo.Dial("mongodb-set-0.mongodb-service,mongodb-set-1.mongodb-service,mongodb-set-2.mongodb-service")
+	session, err := dbutils.DialMongoDB()
 
 	if err != nil {
-		return fmt.Errorf("fail to dial to mongodb cluster, %s", err)
+		return err
 	}
 
 	contactsServer := &server.ContactsServer{
@@ -35,14 +34,14 @@ func initialization(mainServer *svcutils.MainServer) (err error) {
 
 	contactpb.RegisterContactsServer(mainServer.GRPCServer, contactsServer)
 
-	mainServer.ServerObjects = contactsServer
+	mainServer.Server = contactsServer
 
 	return nil
 }
 
 func cleanUp(mainServer *svcutils.MainServer) {
 
-	contactsServer := mainServer.ServerObjects.(*server.ContactsServer)
+	contactsServer := mainServer.Server.(*server.ContactsServer)
 
 	contactsServer.DB.Session.Close()
 }
