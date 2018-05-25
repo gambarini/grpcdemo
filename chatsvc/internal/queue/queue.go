@@ -19,7 +19,7 @@ func NewChatMQ(mqConnection *amqp.Connection) (chatMQ *ChatMQ) {
 	}
 }
 
-func (mq *ChatMQ) Send(msg *chatpb.Message) (err error) {
+func (mq *ChatMQ) Send(chatConnectionID string, msg *chatpb.Message) (err error) {
 
 	channel, err := mq.MqConnection.Channel()
 
@@ -35,7 +35,7 @@ func (mq *ChatMQ) Send(msg *chatpb.Message) (err error) {
 
 	err = channel.Publish(
 		"",
-		msg.ToContactId,
+		chatConnectionID,
 		false,
 		false,
 		amqp.Publishing{
@@ -50,7 +50,7 @@ func (mq *ChatMQ) Send(msg *chatpb.Message) (err error) {
 	return nil
 }
 
-func (mq *ChatMQ) ReceiveFromQueue(ID string, receiveFunc ReceiveFunc, disconnect <-chan int, stream chatpb.Chat_StartChatServer) (err error) {
+func (mq *ChatMQ) ReceiveFromQueue(chatConnectionID string, receiveFunc ReceiveFunc, disconnect <-chan int, stream chatpb.Chat_StartChatServer) (err error) {
 
 	channel, err := mq.MqConnection.Channel()
 
@@ -59,9 +59,9 @@ func (mq *ChatMQ) ReceiveFromQueue(ID string, receiveFunc ReceiveFunc, disconnec
 	}
 
 	_, err = channel.QueueDeclare(
-		ID,
+		chatConnectionID,
 		false,
-		false,
+		true,
 		false,
 		false,
 		nil,
@@ -72,7 +72,7 @@ func (mq *ChatMQ) ReceiveFromQueue(ID string, receiveFunc ReceiveFunc, disconnec
 	}
 
 	deliveries, err := channel.Consume(
-		ID,
+		chatConnectionID,
 		"",
 		true,
 		false,
@@ -89,3 +89,5 @@ func (mq *ChatMQ) ReceiveFromQueue(ID string, receiveFunc ReceiveFunc, disconnec
 
 	return nil
 }
+
+

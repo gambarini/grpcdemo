@@ -4,7 +4,7 @@ import (
 	"google.golang.org/grpc"
 	"log"
 	"github.com/gambarini/grpcdemo/pb/chatpb"
-	"github.com/gambarini/grpcdemo/clients"
+	"github.com/gambarini/grpcdemo/cliutils"
 	"fmt"
 )
 
@@ -14,7 +14,7 @@ func NewInternalChatClient() (chatClient chatpb.ChatClient, conn *grpc.ClientCon
 
 	opts = append(opts, grpc.WithInsecure())
 
-	conn, err = grpc.Dial(clients.InternalChatServiceName, opts...)
+	conn, err = grpc.Dial(cliutils.InternalChatServiceName, opts...)
 
 	if err != nil {
 		return chatClient, conn, fmt.Errorf("failed to dial to Chat Service: %v", err)
@@ -31,7 +31,7 @@ func NewExternalChatClient() (chatClient chatpb.ChatClient, conn *grpc.ClientCon
 
 	opts = append(opts, grpc.WithInsecure())
 
-	conn, err := grpc.Dial(clients.ExternalChatServiceDomain, opts...)
+	conn, err := grpc.Dial(cliutils.ExternalChatServiceDomain, opts...)
 
 	if err != nil {
 		log.Fatalf("failed to dial Chat Service: %v", err)

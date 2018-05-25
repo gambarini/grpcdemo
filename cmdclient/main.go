@@ -1,7 +1,7 @@
 package main
 
 import (
-	clients "github.com/gambarini/grpcdemo/clients/chat"
+	clients "github.com/gambarini/grpcdemo/cliutils/chat"
 	"context"
 	"fmt"
 	"bufio"

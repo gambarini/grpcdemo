@@ -9,9 +9,9 @@ echo -n $ERLANG_COOKIE > $COOKIE_FILE
 chown rabbitmq:rabbitmq $COOKIE_FILE
 chmod 0400 $COOKIE_FILE
 
-rabbitmqctl add_user rabbit rabbit
-rabbitmqctl set_user_tags rabbit administrator
-rabbitmqctl set_permissions -p / rabbit ".*" ".*" ".*"
+#rabbitmqctl add_user rabbit rabbit
+#rabbitmqctl set_user_tags rabbit administrator
+#rabbitmqctl set_permissions -p / rabbit ".*" ".*" ".*"
 
 # Runs rabbitmq-server in foreground. Stdout logging is very limited,
 # only startup success/failure is displayed there. To see the detailed
