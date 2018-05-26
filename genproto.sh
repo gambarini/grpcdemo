@@ -9,6 +9,9 @@ protoc ./pb/proto/chat.proto -I. --go_out=plugins=grpc:$GOPATH/src
 echo Generating contact golang proto files
 protoc ./pb/proto/contact.proto -I. --go_out=plugins=grpc:$GOPATH/src
 
+echo Generating message golang proto files
+protoc ./pb/proto/message.proto -I. --go_out=plugins=grpc:$GOPATH/src
+
 #echo Generating chatsvc javascript proto files
 #mkdir -p js_client
 #protoc ./proto/chatsvc/chatsvc.proto -I. --js_out=./js_client --plugin=grpc

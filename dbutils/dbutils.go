@@ -3,11 +3,9 @@ package dbutils
 import (
 	"gopkg.in/mgo.v2"
 	"fmt"
+	"time"
+	"log"
 )
-
-type DB interface {
-
-}
 
 func DialMongoDB() (session *mgo.Session, err error){
 
@@ -18,6 +16,32 @@ func DialMongoDB() (session *mgo.Session, err error){
 	}
 
 	return session, err
+}
+
+type DB struct {
+	Session *mgo.Session
+	Ticker *time.Ticker
+}
+
+func NewDB(session *mgo.Session) *DB {
+
+	ticker := time.NewTicker(time.Minute * 5)
+
+	db := &DB{session, ticker}
+
+	go db.SessionRefresh()
+
+	return db
+}
+
+func (db *DB) SessionRefresh() {
+
+	for {
+		<- db.Ticker.C
+
+		log.Print("Refreshing mongodb session...")
+		db.Session.Refresh()
+	}
 }
 
 

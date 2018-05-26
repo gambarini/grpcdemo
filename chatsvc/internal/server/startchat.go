@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"github.com/streadway/amqp"
 	"encoding/json"
-	"github.com/gambarini/grpcdemo/chatsvc/internal/db"
+	"github.com/gambarini/grpcdemo/chatsvc/internal/repo"
 )
 
 func (server *ChatServer) StartChat(stream chatpb.Chat_StartChatServer) error {
 
-	var streamContactID, chatConnectionID string
+	var streamContactID string
 	disconnect := make(chan int)
 
 	for {
@@ -21,14 +21,14 @@ func (server *ChatServer) StartChat(stream chatpb.Chat_StartChatServer) error {
 
 		if err == io.EOF {
 			log.Printf("Received EOF: %s", err)
-			endChat(disconnect, server.DB, chatConnectionID)
+			endChat(disconnect, server.Repository, streamContactID)
 			return nil
 		}
 
 		if err != nil {
 			log.Printf("Error Receiving: %s", err)
-			endChat(disconnect, server.DB, chatConnectionID)
-			return err
+			endChat(disconnect, server.Repository, streamContactID)
+			return fmt.Errorf("error receiving: %s", err)
 		}
 
 		log.Printf("Stream Type: %s, From: %s, To: %s, Text: %s", msg.Type, msg.FromContactId, msg.ToContactId, msg.Text)
@@ -40,59 +40,71 @@ func (server *ChatServer) StartChat(stream chatpb.Chat_StartChatServer) error {
 
 		case chatpb.MessageType_CONNECT:
 
-			chatConnectionID, err = server.DB.AddChatConnection(streamContactID, "CLI-DFL")
+			chatConnection, err := server.Repository.AddChatConnection(streamContactID, "CLI-DFL")
 
 			if err != nil {
-				endChat(disconnect, server.DB, chatConnectionID)
+				log.Printf("failed to add connection for contact ID %s, %s", streamContactID, err)
+				endChat(disconnect, server.Repository, chatConnection.ContactID)
 				return fmt.Errorf("failed to add connection for contact ID %s, %s", streamContactID, err)
 			}
 
-			err = server.ChatMQ.ReceiveFromQueue(chatConnectionID, Receive, disconnect, stream)
+			err = server.ChatMQ.ReceiveFromQueue(chatConnection.ContactID, Receive, disconnect, stream)
 
 			if err != nil {
-				endChat(disconnect, server.DB, chatConnectionID)
+				log.Printf("failed to receive for contact ID %s, %s", streamContactID, err)
+				endChat(disconnect, server.Repository, chatConnection.ContactID)
 				return fmt.Errorf("failed to receive for contact ID %s, %s", streamContactID, err)
 			}
 
 		case chatpb.MessageType_DISCONNECT:
 
-			endChat(disconnect, server.DB, chatConnectionID)
+			endChat(disconnect, server.Repository, streamContactID)
 			return io.EOF
 
 		case chatpb.MessageType_TEXT:
 
 			toStreamContactID := msg.ToContactId
 
-			chatConnections, err := server.DB.FindContactChatConnectionIDs(toStreamContactID)
+			chatConnections, err := server.Repository.FindContactChatConnection(toStreamContactID)
 
 			if err != nil {
 				log.Printf("Error finding connections for contact ID %s, %s", toStreamContactID, err)
+				continue
 			}
 
-			if len(chatConnections) == 0 {
+			if chatConnections == nil || chatConnections.ConnNumber == 0 {
 				stream.Send(&chatpb.Message{
 					Type: chatpb.MessageType_TEXT,
 					ToContactId: streamContactID,
 					FromContactId: toStreamContactID,
 					Text: fmt.Sprintf("Contact %s is not connected. Message cannot be delivered.", toStreamContactID),
 				})
+				continue
 			}
 
-			for _, chatConnection := range chatConnections {
-				err := server.ChatMQ.Send(chatConnection.ID, msg)
+			err = server.ChatMQ.Send(chatConnections.ContactID, msg)
 
-				if err != nil {
-					log.Printf("Failed to send to contact ID %s connection %s, %s", chatConnection.ContactID, chatConnection.ID, err)
-				}
+			if err != nil {
+				log.Printf("Failed to send to contact ID %s, %s", chatConnections.ContactID, err)
+				continue
+			}
+
+			msg.Type = chatpb.MessageType_ECHO
+
+			err = server.ChatMQ.Send(streamContactID, msg)
+
+			if err != nil {
+				log.Printf("Failed to send echo message %s, %s", chatConnections.ContactID, err)
+				continue
 			}
 
 		default:
-			log.Printf("Unknow message type, %s", msg.Type, )
+			log.Printf("Unknow message type, %s", msg.Type)
 		}
 	}
 }
 
-func endChat(disconnect chan int, db *db.DB, chatConnectionID string) {
+func endChat(disconnect chan int, db *repo.ChatRepository, chatConnectionID string) {
 
 	close(disconnect)
 
@@ -111,14 +123,14 @@ func Receive(deliveries <-chan amqp.Delivery, disconnect <-chan int, stream chat
 
 				if err != nil {
 					log.Printf("Error unmarshaling message: %s", err)
-					break
+					continue
 				}
 
 				err = stream.Send(&msg)
 
 				if err != nil {
 					log.Printf("Error sending message to stream: %s", err)
-					break
+					continue
 				}
 
 			case <- disconnect:

@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+option go_package = "github.com/gambarini/grpcdemo/pb/messagepb";
+
+package message;
+
+import "google/protobuf/timestamp.proto";
+import "pb/proto/chat.proto";
+
+
+service Message {
+
+    rpc SaveMessages(stream StoreMessage) returns (SaveResponse) {}
+
+    rpc GetMessages(Filter) returns (stream StoreMessage) {}
+
+}
+
+message Filter {
+    string contact_id = 3;
+    google.protobuf.Timestamp from_timestamp = 5;
+}
+
+message SaveResponse {
+
+}
+
+message StoreMessage {
+
+    string text = 1;
+    string from_contact_id = 2;
+    string to_contact_id = 3;
+    chat.MessageType type = 4;
+    google.protobuf.Timestamp timestamp = 5;
+
+}

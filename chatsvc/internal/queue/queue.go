@@ -33,9 +33,23 @@ func (mq *ChatMQ) Send(chatConnectionID string, msg *chatpb.Message) (err error)
 		return err
 	}
 
+	err = channel.ExchangeDeclare(
+		chatConnectionID,   // name
+		"fanout", // type
+		true,     // durable
+		false,    // auto-deleted
+		false,    // internal
+		false,    // no-wait
+		nil,      // arguments
+	)
+
+	if err != nil {
+		return err
+	}
+
 	err = channel.Publish(
-		"",
 		chatConnectionID,
+		"",
 		false,
 		false,
 		amqp.Publishing{
@@ -58,10 +72,11 @@ func (mq *ChatMQ) ReceiveFromQueue(chatConnectionID string, receiveFunc ReceiveF
 		return err
 	}
 
-	_, err = channel.QueueDeclare(
+	err = channel.ExchangeDeclare(
 		chatConnectionID,
-		false,
+		"fanout",
 		true,
+		false,
 		false,
 		false,
 		nil,
@@ -71,8 +86,33 @@ func (mq *ChatMQ) ReceiveFromQueue(chatConnectionID string, receiveFunc ReceiveF
 		return err
 	}
 
-	deliveries, err := channel.Consume(
+	queue, err := channel.QueueDeclare(
+		"",
+		false,
+		false,
+		true,
+		false,
+		nil,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	err = channel.QueueBind(
+		queue.Name,
+		"",
 		chatConnectionID,
+		false,
+		nil,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	deliveries, err := channel.Consume(
+		queue.Name,
 		"",
 		true,
 		false,

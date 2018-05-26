@@ -12,6 +12,8 @@ import (
 
 	"strings"
 	"errors"
+	"github.com/golang/protobuf/ptypes/timestamp"
+	"time"
 )
 
 const (
@@ -55,6 +57,7 @@ func main() {
 		FromContactId: ID,
 		ToContactId:   toID,
 		Type:          chatpb.MessageType_CONNECT,
+		Timestamp:     &timestamp.Timestamp{Seconds: time.Now().UTC().Unix()},
 	})
 
 	if err != nil {
@@ -100,6 +103,7 @@ func Send(stream chatpb.Chat_StartChatClient, text, ID, toID string) error {
 			FromContactId: ID,
 			ToContactId:   toID,
 			Type:          chatpb.MessageType_TEXT,
+			Timestamp:     &timestamp.Timestamp{Seconds: time.Now().UTC().Unix()},
 		})
 	}
 
@@ -124,7 +128,11 @@ func Receive(wait chan interface{}, stream chatpb.Chat_StartChatClient) {
 			log.Fatalf("failed to receive: %v", err)
 		}
 
-		log.Printf("Received from %s: %s \n", msg.FromContactId, msg.Text)
+		if msg.Type == chatpb.MessageType_ECHO {
+			log.Printf("Sent to %s: %s \n", msg.ToContactId, msg.Text)
+		} else {
+			log.Printf("Received from %s: %s \n", msg.FromContactId, msg.Text)
+		}
 	}
 }
 

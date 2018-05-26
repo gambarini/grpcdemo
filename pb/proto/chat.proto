@@ -1,9 +1,10 @@
-
 syntax = "proto3";
 
 option go_package = "github.com/gambarini/grpcdemo/pb/chatpb";
 
-package pb;
+package chat;
+
+import "google/protobuf/timestamp.proto";
 
 service Chat {
 
@@ -16,6 +17,7 @@ enum MessageType {
     CONNECT = 0;
     DISCONNECT = 1;
     TEXT = 2;
+    ECHO = 3;
 }
 
 message Message {
@@ -24,4 +26,5 @@ message Message {
     string from_contact_id = 2;
     string to_contact_id = 3;
     MessageType type = 4;
+    google.protobuf.Timestamp timestamp = 5;
 }

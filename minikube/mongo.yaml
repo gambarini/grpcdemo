@@ -69,7 +69,7 @@ spec:
         - containerPort: 27017
         volumeMounts:
         - name: mongo-persistent-storage
-          mountPath: /data/db
+          mountPath: /data/repo
       - name: mongo-sidecar
         image: cvallance/mongo-k8s-sidecar
         env:

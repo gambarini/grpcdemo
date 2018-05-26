@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/gambarini/grpcdemo/pb/chatpb"
 	"github.com/gambarini/grpcdemo/chatsvc/internal/server"
-	"github.com/gambarini/grpcdemo/chatsvc/internal/db"
+	"github.com/gambarini/grpcdemo/chatsvc/internal/repo"
 	"github.com/gambarini/grpcdemo/cliutils/contact"
 	"github.com/gambarini/grpcdemo/svcutils"
 	"github.com/gambarini/grpcdemo/dbutils"
@@ -45,7 +45,7 @@ func initialization(mainServer *svcutils.MainServer) (err error) {
 	}
 
 	chatServer := &server.ChatServer{
-		DB:                db.NewDB(session),
+		Repository:        repo.NewChatRepository(dbutils.NewDB(session)),
 		ContactClient:     contactClient,
 		ContactClientConn: conn,
 		ChatMQ:            queue.NewChatMQ(mqConnection),
@@ -65,4 +65,6 @@ func cleanUp(mainServer *svcutils.MainServer) {
 	chatServer.ContactClientConn.Close()
 
 	chatServer.ChatMQ.MqConnection.Close()
+
+	chatServer.Repository.DB.Session.Close()
 }
