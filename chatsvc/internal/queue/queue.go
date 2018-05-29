@@ -23,6 +23,8 @@ func (mq *ChatMQ) Send(chatConnectionID string, msg *chatpb.Message) (err error)
 
 	channel, err := mq.MqConnection.Channel()
 
+	defer channel.Close()
+
 	if err != nil {
 		return err
 	}
