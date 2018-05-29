@@ -9,10 +9,10 @@ import (
 )
 
 type ChatRepository struct {
-	DB *dbutils.DB
+	DB dbutils.DB
 }
 
-func NewChatRepository(db *dbutils.DB) *ChatRepository {
+func NewChatRepository(db dbutils.DB) *ChatRepository {
 
 	return &ChatRepository{db}
 
@@ -25,14 +25,18 @@ type ChatConnection struct {
 	ConnNumber int
 }
 
-func (repo *ChatRepository) GetCollection() *mgo.Collection {
+func (repo *ChatRepository) GetCollection() (*mgo.Session, *mgo.Collection) {
 
-	return repo.DB.Session.DB("grpcdemo").C("Connection")
+	session := repo.DB.GetSession()
+
+	return session, session.DB("grpcdemo").C("Connection")
 }
 
 func (repo *ChatRepository) AddChatConnection(contactID, Source string) (chatConnection *ChatConnection, err error) {
 
-	collection := repo.GetCollection()
+	session, collection := repo.GetCollection()
+
+	defer session.Close()
 
 	chatConnection, err = repo.FindContactChatConnection(contactID)
 
@@ -69,7 +73,9 @@ func (repo *ChatRepository) AddChatConnection(contactID, Source string) (chatCon
 
 func (repo *ChatRepository) FindContactChatConnection(contactID string) (chatConnection *ChatConnection, err error) {
 
-	collection := repo.GetCollection()
+	session, collection := repo.GetCollection()
+
+	defer session.Close()
 
 	var connections []ChatConnection
 
@@ -90,7 +96,9 @@ func (repo *ChatRepository) FindContactChatConnection(contactID string) (chatCon
 
 func (repo *ChatRepository) RemoveChatConnection(contactID string) (err error) {
 
-	collection := repo.GetCollection()
+	session, collection := repo.GetCollection()
+
+	defer session.Close()
 
 	chatConnection, err := repo.FindContactChatConnection(contactID)
 

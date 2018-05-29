@@ -8,12 +8,22 @@ import (
 	"github.com/streadway/amqp"
 	"encoding/json"
 	"github.com/gambarini/grpcdemo/chatsvc/internal/repo"
+	"golang.org/x/net/context"
+	"github.com/gambarini/grpcdemo/pb/messagepb"
 )
 
 func (server *ChatServer) StartChat(stream chatpb.Chat_StartChatServer) error {
 
 	var streamContactID string
 	disconnect := make(chan int)
+
+	storeMessageStream, err := server.MessageClient.StoreMessages(context.TODO())
+
+	if err != nil {
+		log.Printf("Failed to connect to message store: %s", err)
+		endChat(disconnect, server.Repository, streamContactID)
+		return fmt.Errorf("failed to connect to message store: %s", err)
+	}
 
 	for {
 
@@ -48,13 +58,15 @@ func (server *ChatServer) StartChat(stream chatpb.Chat_StartChatServer) error {
 				return fmt.Errorf("failed to add connection for contact ID %s, %s", streamContactID, err)
 			}
 
-			err = server.ChatMQ.ReceiveFromQueue(chatConnection.ContactID, Receive, disconnect, stream)
+			deliveries, channel, err := server.ChatMQ.ReceiveFromQueue(chatConnection.ContactID)
 
 			if err != nil {
-				log.Printf("failed to receive for contact ID %s, %s", streamContactID, err)
+				log.Printf("failed to start receiving for contact ID %s, %s", streamContactID, err)
 				endChat(disconnect, server.Repository, chatConnection.ContactID)
-				return fmt.Errorf("failed to receive for contact ID %s, %s", streamContactID, err)
+				return fmt.Errorf("failed to start receiving for contact ID %s, %s", streamContactID, err)
 			}
+
+			go Receive(deliveries, disconnect, stream, channel)
 
 		case chatpb.MessageType_DISCONNECT:
 
@@ -72,21 +84,42 @@ func (server *ChatServer) StartChat(stream chatpb.Chat_StartChatServer) error {
 				continue
 			}
 
-			if chatConnections == nil || chatConnections.ConnNumber == 0 {
+			if chatConnections == nil {
 				stream.Send(&chatpb.Message{
-					Type: chatpb.MessageType_TEXT,
+					Type: chatpb.MessageType_SYSTEM,
 					ToContactId: streamContactID,
 					FromContactId: toStreamContactID,
-					Text: fmt.Sprintf("Contact %s is not connected. Message cannot be delivered.", toStreamContactID),
+					Text: fmt.Sprintf("Contact %s does not exist. Message cannot be delivered.", toStreamContactID),
 				})
 				continue
 			}
 
-			err = server.ChatMQ.Send(chatConnections.ContactID, msg)
+			err = storeMessages(storeMessageStream, msg, stream)
 
 			if err != nil {
-				log.Printf("Failed to send to contact ID %s, %s", chatConnections.ContactID, err)
+				log.Printf("%s", err)
+
+				stream.Send(&chatpb.Message{
+					Type: chatpb.MessageType_SYSTEM,
+					ToContactId: msg.FromContactId,
+					FromContactId: msg.FromContactId,
+					Text: fmt.Sprintf("Error: Message could not be delivered due to an internal error."),
+				})
+
 				continue
+			}
+
+			if chatConnections.ConnNumber > 0 {
+
+				err = server.ChatMQ.Send(chatConnections.ContactID, msg)
+
+				if err != nil {
+					log.Printf("Failed to send to contact ID %s, %s", chatConnections.ContactID, err)
+					continue
+				}
+
+			} else {
+				log.Printf("No connections for contact ID %s, The message will be stored only.", chatConnections.ContactID)
 			}
 
 			msg.Type = chatpb.MessageType_ECHO
@@ -102,6 +135,30 @@ func (server *ChatServer) StartChat(stream chatpb.Chat_StartChatServer) error {
 			log.Printf("Unknow message type, %s", msg.Type)
 		}
 	}
+}
+
+func storeMessages(storeMessageStream messagepb.Message_StoreMessagesClient, msg *chatpb.Message, stream chatpb.Chat_StartChatServer) (err error) {
+
+	err = storeMessageStream.Send(&messagepb.StoreMessage{
+		Message: msg,
+		ContactId: msg.FromContactId,
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to send message to store for contact ID %s, %s", msg.FromContactId, err)
+	}
+
+	err = storeMessageStream.Send(&messagepb.StoreMessage{
+		Message: msg,
+		ContactId: msg.ToContactId,
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to send message to store for contact ID %s, %s", msg.ToContactId, err)
+	}
+
+	return nil
+
 }
 
 func endChat(disconnect chan int, db *repo.ChatRepository, chatConnectionID string) {
@@ -139,30 +196,4 @@ func Receive(deliveries <-chan amqp.Delivery, disconnect <-chan int, stream chat
 				return
 		}
 	}
-}
-
-func Cont(){
-	/*ctx := context.TODO()
-
-	contactsStream, err := server.ContactClient.StoreContacts(ctx)
-
-	if err != nil {
-		log.Printf("Error Storing contact: %s", err)
-
-		return err
-	}
-
-	err = contactsStream.Send(&contactpb.Contact{
-		Id:   streamContactID,
-		Type: contactpb.ContactType_STANDARD,
-		Name: "NONE",
-	})
-
-	if err != nil {
-		log.Printf("Error sending contact: %s", err)
-
-		return err
-	}
-
-	contactsStream.CloseSend()*/
 }

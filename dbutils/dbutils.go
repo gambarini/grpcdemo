@@ -7,41 +7,64 @@ import (
 	"log"
 )
 
-func DialMongoDB() (session *mgo.Session, err error){
+const (
+	MongoDBURL = "mongodb-set-0.mongodb-service,mongodb-set-1.mongodb-service,mongodb-set-2.mongodb-service"
+)
 
-	session, err = mgo.Dial("mongodb-set-0.mongodb-service,mongodb-set-1.mongodb-service,mongodb-set-2.mongodb-service")
+type (
 
-	if err != nil {
-		return session, fmt.Errorf("fail to dial to mongodb cluster, %s", err)
+	DB interface {
+		GetSession() *mgo.Session
+		CleanUp()
 	}
 
-	return session, err
-}
+	MongoDB struct {
+		session *mgo.Session
+		ticker *time.Ticker
+	}
+)
 
-type DB struct {
-	Session *mgo.Session
-	Ticker *time.Ticker
-}
 
-func NewDB(session *mgo.Session) *DB {
+func NewMongoDB(mongoDbURL string) (db *MongoDB, err error) {
 
-	ticker := time.NewTicker(time.Minute * 5)
+	session, err := mgo.Dial(mongoDbURL)
 
-	db := &DB{session, ticker}
+	if err != nil {
+		return db, fmt.Errorf("fail to dial to mongodb cluster, %s", err)
+	}
+
+	ticker := time.NewTicker(time.Minute * 10)
+
+	db = &MongoDB{session, ticker}
 
 	go db.SessionRefresh()
 
-	return db
+	return db, nil
 }
 
-func (db *DB) SessionRefresh() {
+func (db *MongoDB) SessionRefresh() {
 
 	for {
-		<- db.Ticker.C
+		<- db.ticker.C
 
 		log.Print("Refreshing mongodb session...")
-		db.Session.Refresh()
+		db.session.Refresh()
 	}
 }
+
+func (db *MongoDB) GetSession() *mgo.Session{
+
+	session := db.session.Copy()
+
+	session.SetMode(mgo.Monotonic, true)
+
+	return session
+}
+
+func (db *MongoDB) CleanUp() {
+	db.ticker.Stop()
+	db.session.Close()
+}
+
 
 

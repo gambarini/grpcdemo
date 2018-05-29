@@ -10,6 +10,7 @@ import (
 	"github.com/streadway/amqp"
 	"fmt"
 	"github.com/gambarini/grpcdemo/chatsvc/internal/queue"
+	"github.com/gambarini/grpcdemo/cliutils/message"
 )
 
 func main() {
@@ -26,7 +27,7 @@ func main() {
 
 func initialization(mainServer *svcutils.MainServer) (err error) {
 
-	session, err := dbutils.DialMongoDB()
+	db, err := dbutils.NewMongoDB(dbutils.MongoDBURL)
 
 	if err != nil {
 		return err
@@ -44,10 +45,14 @@ func initialization(mainServer *svcutils.MainServer) (err error) {
 		return err
 	}
 
+	messageClient, messageConn, err := message.NewInternalMessageClient()
+
 	chatServer := &server.ChatServer{
-		Repository:        repo.NewChatRepository(dbutils.NewDB(session)),
+		Repository:        repo.NewChatRepository(db),
 		ContactClient:     contactClient,
 		ContactClientConn: conn,
+		MessageClient:     messageClient,
+		MessageClientConn: messageConn,
 		ChatMQ:            queue.NewChatMQ(mqConnection),
 	}
 
@@ -64,7 +69,9 @@ func cleanUp(mainServer *svcutils.MainServer) {
 
 	chatServer.ContactClientConn.Close()
 
+	chatServer.MessageClientConn.Close()
+
 	chatServer.ChatMQ.MqConnection.Close()
 
-	chatServer.Repository.DB.Session.Close()
+	chatServer.Repository.DB.CleanUp()
 }

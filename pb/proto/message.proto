@@ -10,15 +10,15 @@ import "pb/proto/chat.proto";
 
 service Message {
 
-    rpc SaveMessages(stream StoreMessage) returns (SaveResponse) {}
+    rpc StoreMessages(stream StoreMessage) returns (SaveResponse) {}
 
-    rpc GetMessages(Filter) returns (stream StoreMessage) {}
+    rpc GetMessages(Filter) returns (stream chat.Message) {}
 
 }
 
 message Filter {
-    string contact_id = 3;
-    google.protobuf.Timestamp from_timestamp = 5;
+    string contact_id = 1;
+    google.protobuf.Timestamp from_timestamp = 2;
 }
 
 message SaveResponse {
@@ -26,11 +26,6 @@ message SaveResponse {
 }
 
 message StoreMessage {
-
-    string text = 1;
-    string from_contact_id = 2;
-    string to_contact_id = 3;
-    chat.MessageType type = 4;
-    google.protobuf.Timestamp timestamp = 5;
-
+    string contact_id = 1;
+    chat.Message message = 2;
 }

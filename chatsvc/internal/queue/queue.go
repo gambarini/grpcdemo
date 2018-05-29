@@ -34,13 +34,13 @@ func (mq *ChatMQ) Send(chatConnectionID string, msg *chatpb.Message) (err error)
 	}
 
 	err = channel.ExchangeDeclare(
-		chatConnectionID,   // name
-		"fanout", // type
-		true,     // durable
-		false,    // auto-deleted
-		false,    // internal
-		false,    // no-wait
-		nil,      // arguments
+		chatConnectionID,
+		"fanout",
+		true,
+		false,
+		false,
+		false,
+		nil,
 	)
 
 	if err != nil {
@@ -64,12 +64,12 @@ func (mq *ChatMQ) Send(chatConnectionID string, msg *chatpb.Message) (err error)
 	return nil
 }
 
-func (mq *ChatMQ) ReceiveFromQueue(chatConnectionID string, receiveFunc ReceiveFunc, disconnect <-chan int, stream chatpb.Chat_StartChatServer) (err error) {
+func (mq *ChatMQ) ReceiveFromQueue(chatConnectionID string) (deliveries <-chan amqp.Delivery, channel *amqp.Channel, err error) {
 
-	channel, err := mq.MqConnection.Channel()
+	channel, err = mq.MqConnection.Channel()
 
 	if err != nil {
-		return err
+		return deliveries, channel, err
 	}
 
 	err = channel.ExchangeDeclare(
@@ -83,7 +83,7 @@ func (mq *ChatMQ) ReceiveFromQueue(chatConnectionID string, receiveFunc ReceiveF
 	)
 
 	if err != nil {
-		return err
+		return deliveries, channel, err
 	}
 
 	queue, err := channel.QueueDeclare(
@@ -96,7 +96,7 @@ func (mq *ChatMQ) ReceiveFromQueue(chatConnectionID string, receiveFunc ReceiveF
 	)
 
 	if err != nil {
-		return err
+		return deliveries, channel, err
 	}
 
 	err = channel.QueueBind(
@@ -108,10 +108,10 @@ func (mq *ChatMQ) ReceiveFromQueue(chatConnectionID string, receiveFunc ReceiveF
 	)
 
 	if err != nil {
-		return err
+		return deliveries, channel, err
 	}
 
-	deliveries, err := channel.Consume(
+	deliveries, err = channel.Consume(
 		queue.Name,
 		"",
 		true,
@@ -122,12 +122,8 @@ func (mq *ChatMQ) ReceiveFromQueue(chatConnectionID string, receiveFunc ReceiveF
 	)
 
 	if err != nil {
-		return err
+		return deliveries, channel, err
 	}
 
-	go receiveFunc(deliveries, disconnect, stream, channel)
-
-	return nil
+	return deliveries, channel, nil
 }
-
-

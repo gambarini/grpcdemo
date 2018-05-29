@@ -2,13 +2,13 @@ package server
 
 import (
 	"github.com/gambarini/grpcdemo/pb/contactpb"
-	"github.com/gambarini/grpcdemo/contactsvc/internal/db"
+	"github.com/gambarini/grpcdemo/contactsvc/internal/repo"
 	"io"
 	"log"
 )
 
 type ContactsServer struct {
-	DB *db.DB
+	ContactRepository *repo.ContactRepository
 }
 
 func (server *ContactsServer) StoreContacts(stream contactpb.Contacts_StoreContactsServer) error {
@@ -29,14 +29,14 @@ func (server *ContactsServer) StoreContacts(stream contactpb.Contacts_StoreConta
 
 		log.Printf("Contact to store: %v", contact)
 
-		server.DB.StoreContact(contact)
+		server.ContactRepository.StoreContact(contact)
 
 	}
 }
 
 func (server *ContactsServer) ListContacts(filterContact *contactpb.Contact, stream contactpb.Contacts_ListContactsServer) error {
 
-	contact, err := server.DB.FindContact(filterContact.Id)
+	contact, err := server.ContactRepository.FindContact(filterContact.Id)
 
 	if err != nil {
 		return err

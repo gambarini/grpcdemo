@@ -22,13 +22,13 @@ func main() {
 
 func initialization(mainServer *svcutils.MainServer) (err error) {
 
-	session, err := dbutils.DialMongoDB()
+	db, err := dbutils.NewMongoDB(dbutils.MongoDBURL)
 
 	if err != nil {
 		return err
 	}
 	messageServer := &server.MessageServer{
-		Repository:        repo.NewMessageRepository(dbutils.NewDB(session)),
+		Repository:        repo.NewMessageRepository(db),
 	}
 
 	messagepb.RegisterMessageServer(mainServer.GRPCServer, messageServer)
@@ -42,5 +42,5 @@ func cleanUp(mainServer *svcutils.MainServer) {
 
 	chatServer := mainServer.Server.(*server.MessageServer)
 
-	chatServer.Repository.DB.Session.Close()
+	chatServer.Repository.DB.CleanUp()
 }

@@ -22,7 +22,7 @@ echo contact-service on: ${chat_url}
 chat_url="$(minikube service message-service --url)"
 echo message-service on: ${chat_url}
 
-read -p "Press any key to stop serving..." -n1 -s
+read -p "Press any key to stop serving services..." -n1 -s
 
 kubectl delete deployment chat
 kubectl delete service chat-service

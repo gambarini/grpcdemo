@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/gambarini/grpcdemo/pb/messagepb"
+	"log"
 )
 
 func NewInternalMessageClient() (contactClient messagepb.MessageClient, conn *grpc.ClientConn, err error) {
@@ -23,4 +24,19 @@ func NewInternalMessageClient() (contactClient messagepb.MessageClient, conn *gr
 	contactClient = messagepb.NewMessageClient(conn)
 
 	return contactClient, conn, nil
+}
+
+func NewExternalMessageClient() (messageClient messagepb.MessageClient, conn *grpc.ClientConn) {
+
+	var opts []grpc.DialOption
+
+	opts = append(opts, grpc.WithInsecure())
+
+	conn, err := grpc.Dial(cliutils.ExternalMessageServiceDomain, opts...)
+
+	if err != nil {
+		log.Fatalf("failed to dial Message Service: %v", err)
+	}
+
+	return messagepb.NewMessageClient(conn), conn
 }

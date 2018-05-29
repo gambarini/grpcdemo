@@ -18,6 +18,7 @@ enum MessageType {
     DISCONNECT = 1;
     TEXT = 2;
     ECHO = 3;
+    SYSTEM = 4;
 }
 
 message Message {

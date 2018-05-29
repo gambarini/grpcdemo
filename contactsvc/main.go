@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/gambarini/grpcdemo/pb/contactpb"
 	"github.com/gambarini/grpcdemo/contactsvc/internal/server"
-	"github.com/gambarini/grpcdemo/contactsvc/internal/db"
 	"github.com/gambarini/grpcdemo/svcutils"
 	"github.com/gambarini/grpcdemo/dbutils"
+	"github.com/gambarini/grpcdemo/contactsvc/internal/repo"
 )
 
 func main() {
@@ -22,14 +22,14 @@ func main() {
 
 func initialization(mainServer *svcutils.MainServer) (err error) {
 
-	session, err := dbutils.DialMongoDB()
+	db, err := dbutils.NewMongoDB(dbutils.MongoDBURL)
 
 	if err != nil {
 		return err
 	}
 
 	contactsServer := &server.ContactsServer{
-		DB: db.NewDB(session),
+		ContactRepository: repo.NewContactRepository(db),
 	}
 
 	contactpb.RegisterContactsServer(mainServer.GRPCServer, contactsServer)
@@ -43,5 +43,5 @@ func cleanUp(mainServer *svcutils.MainServer) {
 
 	contactsServer := mainServer.Server.(*server.ContactsServer)
 
-	contactsServer.DB.Session.Close()
+	contactsServer.ContactRepository.DB.CleanUp()
 }

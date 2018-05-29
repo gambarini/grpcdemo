@@ -2,6 +2,7 @@ package main
 
 import (
 	clients "github.com/gambarini/grpcdemo/cliutils/chat"
+	clientMessage "github.com/gambarini/grpcdemo/cliutils/message"
 	"context"
 	"fmt"
 	"bufio"
@@ -11,36 +12,50 @@ import (
 	"io"
 
 	"strings"
-	"errors"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"time"
+	"github.com/gambarini/grpcdemo/pb/messagepb"
+	"google.golang.org/grpc"
+	"os/exec"
 )
 
 const (
-	endKeyword = "/end"
+	endKeyword    = "/end"
+	changeKeyword = "/to"
 )
 
 var (
-	ErrDisconnect = errors.New("disconnecting")
+
+	messageClient  messagepb.MessageClient
+	ID, toID       string
+	ctx            context.Context
+	messageConn    *grpc.ClientConn
+	reader         *bufio.Reader
+	bufferMessages []string
 )
 
 func main() {
 
-	reader := bufio.NewReader(os.Stdin)
+	reader = bufio.NewReader(os.Stdin)
 
 	fmt.Println("Enter your ID:")
 
-	ID := readInput(reader)
+	ID = readInput(reader)
 
-	fmt.Println("Sent to ID:")
+	fmt.Println("to ID:")
 
-	toID := readInput(reader)
+	toID = readInput(reader)
 
-	ctx := context.TODO()
+	ctx = context.TODO()
 
 	chatClient, conn := clients.NewExternalChatClient()
 
+	messageClient, messageConn = clientMessage.NewExternalMessageClient()
+
 	defer conn.Close()
+	defer messageConn.Close()
+
+	initializeMsgBuffer()
 
 	stream, err := chatClient.StartChat(ctx)
 
@@ -64,48 +79,108 @@ func main() {
 		log.Fatalf("Erro connecting: %v", err)
 	}
 
+	clear()
+	display()
+	desc()
+
 	for {
-		fmt.Println("Type '/end' to disconnect")
-		fmt.Printf("Type text to %s: \n", toID)
 
-		text := readInput(reader)
+		text := askCommand()
 
-		err = Send(stream, text, ID, toID)
+		switch text {
 
-		if err == ErrDisconnect {
+		case endKeyword:
+			stream.CloseSend()
 			return
+
+		case changeKeyword:
+			fmt.Println("to ID:")
+			toID = readInput(reader)
+			initializeMsgBuffer()
+			clear()
+			display()
+			desc()
+
+		default:
+			err = Send(stream, text)
 		}
 
 		if err != nil {
 			log.Fatalf("failed to send msg: %v", err)
 		}
-	}
 
-	stream.CloseSend()
+	}
 
 	<-wait
 
 }
 
-func Send(stream chatpb.Chat_StartChatClient, text, ID, toID string) error {
+func desc() {
+	fmt.Println("------------------------------")
+	fmt.Println("Type '/end' to disconnect")
+	fmt.Println("Type '/to' to chat to a new contact")
+	fmt.Printf("%s type text to %s: \n", ID, toID)
+
+}
+
+func askCommand() string {
+
+	return readInput(reader)
+}
+
+func clear() {
+	c := exec.Command("clear")
+	c.Stdout = os.Stdout
+	c.Run()
+}
+
+func display() {
+	for _, m := range bufferMessages {
+		fmt.Println(m)
+	}
+}
+
+func initializeMsgBuffer() {
+
+	bufferMessages = make([]string, 0)
+
+	stream, _ := messageClient.GetMessages(ctx, &messagepb.Filter{
+		ContactId: ID,
+		FromTimestamp: &timestamp.Timestamp{
+			Seconds: 0,
+		},
+	})
+
+	for {
+		msg, err := stream.Recv()
+
+		if err != nil {
+			break
+		}
+
+		if msg.FromContactId == toID || msg.ToContactId == toID {
+
+			updateMsgBuffer(msg)
+		}
+	}
+
+}
+
+func updateMsgBuffer(msg *chatpb.Message) {
+	bufferMessages = append(bufferMessages, fmt.Sprintf("%s: %s \n", msg.FromContactId, msg.Text))
+}
+
+func Send(stream chatpb.Chat_StartChatClient, text string) error {
 
 	var err error
 
-	switch text {
-
-	case endKeyword:
-		stream.CloseSend()
-		return ErrDisconnect
-
-	default:
-		err = stream.Send(&chatpb.Message{
-			Text:          text,
-			FromContactId: ID,
-			ToContactId:   toID,
-			Type:          chatpb.MessageType_TEXT,
-			Timestamp:     &timestamp.Timestamp{Seconds: time.Now().UTC().Unix()},
-		})
-	}
+	err = stream.Send(&chatpb.Message{
+		Text:          text,
+		FromContactId: ID,
+		ToContactId:   toID,
+		Type:          chatpb.MessageType_TEXT,
+		Timestamp:     &timestamp.Timestamp{Seconds: time.Now().UTC().Unix()},
+	})
 
 	if err != nil {
 		return err
@@ -128,11 +203,24 @@ func Receive(wait chan interface{}, stream chatpb.Chat_StartChatClient) {
 			log.Fatalf("failed to receive: %v", err)
 		}
 
-		if msg.Type == chatpb.MessageType_ECHO {
-			log.Printf("Sent to %s: %s \n", msg.ToContactId, msg.Text)
-		} else {
-			log.Printf("Received from %s: %s \n", msg.FromContactId, msg.Text)
+		if msg.Type == chatpb.MessageType_SYSTEM {
+			fmt.Printf(" *** %s ***\n", msg.Text)
 		}
+
+		if msg.Type == chatpb.MessageType_TEXT && msg.FromContactId == toID{
+			updateMsgBuffer(msg)
+			clear()
+			display()
+			desc()
+		}
+
+		if msg.Type == chatpb.MessageType_ECHO && msg.ToContactId == toID{
+			updateMsgBuffer(msg)
+			clear()
+			display()
+			desc()
+		}
+
 	}
 }
 
