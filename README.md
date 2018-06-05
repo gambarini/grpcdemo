@@ -4,7 +4,7 @@ Proof of concept demo for a simple message application.
 
 It's a microservice architecture, with GRPC, deployed on kubernetes.
 
-For the demo, messages are stored in a MongoDB cluster. and
+For the demo, messages are stored in a MongoDB cluster.
 
 The message routing is done throught GRPC streams connected to RabbitMQ fanout exchanges. Allowing
 scalling and availability by a RabbitMQ cluster, with replication of exchanges.
