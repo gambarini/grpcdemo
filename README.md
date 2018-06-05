@@ -65,7 +65,7 @@ been created yet.
 Once you connect with one ID, you can reconnect with that same contact in
 the future to check messages from other contacts.
 
-You must to know a contact ID to send messages to that contact. There is no
+You must know a contact ID to send messages to that contact. There is no
 contact discovery yet (it's part of the contact service).
 
 ## Future changes
