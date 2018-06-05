@@ -68,7 +68,8 @@ the future to check messages from other contacts.
 You must know a contact ID to send messages to that contact. There is no
 contact discovery yet (it's part of the contact service).
 
-## Future changes
+## Future Road map
 
-- Add contact Discovery and mangement
-- Create a Google Kubernetes Engine deployment
+- Add contact Discovery and mangement.
+- Create a Google Kubernetes Engine deployment, with actual service loadbalance.
+- A fancy web client application.
