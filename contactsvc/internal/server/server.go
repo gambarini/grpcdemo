@@ -5,10 +5,32 @@ import (
 	"github.com/gambarini/grpcdemo/contactsvc/internal/repo"
 	"io"
 	"log"
+	"github.com/gambarini/grpcdemo/dbutils"
+	"github.com/gambarini/grpcdemo/svcutils"
 )
 
 type ContactsServer struct {
 	ContactRepository *repo.ContactRepository
+}
+
+func (server *ContactsServer) Initialize(main *svcutils.Main) (err error) {
+
+	db, err := dbutils.NewMongoDB(dbutils.MongoDBURL)
+
+	if err != nil {
+		return err
+	}
+
+	server.ContactRepository = repo.NewContactRepository(db)
+
+	contactpb.RegisterContactsServer(main.GRPCServer, server)
+
+	return nil
+}
+
+func (server *ContactsServer) CleanUp() {
+
+	server.ContactRepository.DB.CleanUp()
 }
 
 func (server *ContactsServer) StoreContacts(stream contactpb.Contacts_StoreContactsServer) error {

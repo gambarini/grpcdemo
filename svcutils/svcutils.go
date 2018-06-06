@@ -1,76 +1,80 @@
 package svcutils
 
 import (
-	"net"
-	"fmt"
 	"log"
+	"os"
 	"google.golang.org/grpc"
 	"os/signal"
-	"os"
 	"syscall"
+	"net"
+	"fmt"
 )
 
-type InitializationFunc func(mainServer *MainServer) (err error)
-type CleanUpFunc func(mainServer *MainServer)
+type (
+	Server interface {
+		Initialize(main *Main) error
+		CleanUp()
+	}
 
-type MainServer struct {
-	Name           string
-	ServerPort     int
-	Initialization InitializationFunc
-	CleanUp        CleanUpFunc
-	GRPCServer     *grpc.Server
-	Server         interface{}
-	signalChannel  chan os.Signal
-}
+	Main struct {
+		Name          string
+		ServerPort    int
+		GRPCServer    *grpc.Server
+		signalChannel chan os.Signal
+		Server        Server
+	}
+)
 
-func (mainServer *MainServer) Run() {
+func (main *Main) Run() {
 
-	mainServer.signalChannel = make(chan os.Signal, 1)
+	main.signalChannel = make(chan os.Signal, 1)
 
-	signal.Notify(mainServer.signalChannel, syscall.SIGINT)  // Handling Ctrl + C
-	signal.Notify(mainServer.signalChannel, syscall.SIGTERM) // Handling Docker stop
+	signal.Notify(main.signalChannel, syscall.SIGINT)  // Handling Ctrl + C
+	signal.Notify(main.signalChannel, syscall.SIGTERM) // Handling Docker stop
 
-	mainServer.GRPCServer = grpc.NewServer()
+	main.GRPCServer = grpc.NewServer()
 
-	log.Print("Initializing server resources...")
-	err := mainServer.Initialization(mainServer)
+	log.Print("Initializing main resources...")
+	err := main.Server.Initialize(main)
 
 	if err != nil {
-		log.Fatalf("Failed to initialize server resources: %s", err)
+		log.Fatalf("Failed to initialize main resources: %s", err)
 	}
 
 	log.Print("Initialization Done!")
 
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", mainServer.ServerPort))
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", main.ServerPort))
 
 	if err != nil {
-		mainServer.CleanUp(mainServer)
-		log.Fatalf("Error creating TCP listener on port %d: %s", mainServer.ServerPort, err)
+		main.Server.CleanUp()
+		log.Fatalf("Error creating TCP listener on port %d: %s", main.ServerPort, err)
 	}
 
-	go mainServer.handleSystemSignals()
+	go main.handleSystemSignals()
 
-	log.Printf("%s listening on port %d", mainServer.Name, mainServer.ServerPort)
-	err = mainServer.GRPCServer.Serve(listener)
+	log.Printf("%s listening on port %d", main.Name, main.ServerPort)
+	err = main.GRPCServer.Serve(listener)
 
 	if err != nil {
-		mainServer.CleanUp(mainServer)
+		main.Server.CleanUp()
 		log.Fatalf("Error while starting to serve: %s", err)
 	}
 
-	log.Print("Cleanning up server resorces...")
-	mainServer.CleanUp(mainServer)
+	log.Print("Cleanning up main resorces...")
+	main.Server.CleanUp()
 
 	log.Print("Server stopped.")
 }
 
-func (mainServer *MainServer) handleSystemSignals() {
 
-	sig := <-mainServer.signalChannel
+
+func (main *Main) handleSystemSignals() {
+
+	sig := <-main.signalChannel
 
 	log.Printf("System signal received: %s", sig.String())
 
 	log.Print("Gracefully stopping server...")
-	mainServer.GRPCServer.GracefulStop()
+	main.GRPCServer.GracefulStop()
 
 }

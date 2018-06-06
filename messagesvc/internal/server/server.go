@@ -8,10 +8,31 @@ import (
 	"fmt"
 	"github.com/gambarini/grpcdemo/pb/chatpb"
 	"github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/gambarini/grpcdemo/dbutils"
+	"github.com/gambarini/grpcdemo/svcutils"
 )
 
 type MessageServer struct {
 	Repository *repo.MessageRepository
+}
+
+func (server *MessageServer) Initialize(main *svcutils.Main) (err error) {
+
+	db, err := dbutils.NewMongoDB(dbutils.MongoDBURL)
+
+	if err != nil {
+		return err
+	}
+	server.Repository = repo.NewMessageRepository(db)
+
+	messagepb.RegisterMessageServer(main.GRPCServer, server)
+
+	return nil
+}
+
+func (server *MessageServer) CleanUp() {
+
+	server.Repository.DB.CleanUp()
 }
 
 func (server *MessageServer) StoreMessages(stream messagepb.Message_StoreMessagesServer) error {
@@ -76,5 +97,4 @@ func (server *MessageServer) GetMessages(filter *messagepb.Filter, stream messag
 	}
 
 	return nil
-
 }
