@@ -25,7 +25,6 @@ const (
 )
 
 var (
-
 	messageClient  messagepb.MessageClient
 	ID, toID       string
 	ctx            context.Context
@@ -76,7 +75,7 @@ func main() {
 	})
 
 	if err != nil {
-		log.Fatalf("Erro connecting: %v", err)
+		log.Fatalf("Error connecting: %v", err)
 	}
 
 	clear()
@@ -207,14 +206,14 @@ func Receive(wait chan interface{}, stream chatpb.Chat_StartChatClient) {
 			fmt.Printf(" *** %s ***\n", msg.Text)
 		}
 
-		if msg.Type == chatpb.MessageType_TEXT && msg.FromContactId == toID{
+		if msg.Type == chatpb.MessageType_TEXT && msg.FromContactId == toID {
 			updateMsgBuffer(msg)
 			clear()
 			display()
 			desc()
 		}
 
-		if msg.Type == chatpb.MessageType_ECHO && msg.ToContactId == toID{
+		if msg.Type == chatpb.MessageType_ECHO && msg.ToContactId == toID {
 			updateMsgBuffer(msg)
 			clear()
 			display()

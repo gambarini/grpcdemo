@@ -1,0 +1,87 @@
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: mongodb-replic-rbac
+subjects:
+  - kind: ServiceAccount
+    # Reference to upper's `metadata.name`
+    name: default
+    # Reference to upper's `metadata.namespace`
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-service
+  labels:
+    app: mongodb
+    tier: database
+    phase: test
+spec:
+  ports:
+  - port: 27017
+    targetPort: 27017
+  clusterIP: None #this is a headless service
+  selector:
+    app: mongodb
+    tier: database
+    phase: test
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb-set
+spec:
+  serviceName: mongodb-service
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mongodb
+      tier: database
+      phase: test
+  template:
+    metadata:
+      labels:
+        app: mongodb
+        tier: database
+        phase: test
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: mongo
+        image: mongo:3.6
+        command:
+        - mongod
+        - "--replSet"
+        - rs0
+        - "--smallfiles"
+        - "--noprealloc"
+        - "--bind_ip_all"
+        ports:
+        - containerPort: 27017
+        volumeMounts:
+        - name: mongo-persistent-storage
+          mountPath: /data/repo
+      - name: mongo-sidecar
+        image: cvallance/mongo-k8s-sidecar
+        env:
+        - name: MONGO_SIDECAR_POD_LABELS
+          value: "app=mongodb,tier=database,phase=test"
+  volumeClaimTemplates:
+  - metadata:
+      name: mongo-persistent-storage
+      annotations:
+              volume.beta.kubernetes.io/storage-class: standard
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi

@@ -10,7 +10,7 @@ COPY . .
 RUN apk add --no-cache git && go get -d -v ./...
 
 
-EXPOSE 9000
+EXPOSE 80
 
 ENTRYPOINT ["go", "run"]
 

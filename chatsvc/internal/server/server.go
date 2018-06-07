@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/gambarini/grpcdemo/pb/contactpb"
+
 	"github.com/gambarini/grpcdemo/chatsvc/internal/repo"
 	"google.golang.org/grpc"
 	"github.com/gambarini/grpcdemo/chatsvc/internal/queue"
@@ -10,15 +10,14 @@ import (
 	"github.com/gambarini/grpcdemo/dbutils"
 	"github.com/streadway/amqp"
 	"fmt"
-	"github.com/gambarini/grpcdemo/cliutils/contact"
 	"github.com/gambarini/grpcdemo/cliutils/message"
 	"github.com/gambarini/grpcdemo/pb/chatpb"
 )
 
 type ChatServer struct {
 	Repository        *repo.ChatRepository
-	ContactClient     contactpb.ContactsClient
-	ContactClientConn *grpc.ClientConn
+	//ContactClient     contactpb.ContactsClient
+	//ContactClientConn *grpc.ClientConn
 	MessageClient     messagepb.MessageClient
 	MessageClientConn *grpc.ClientConn
 	ChatMQ            *queue.ChatMQ
@@ -32,23 +31,23 @@ func (server *ChatServer) Initialize(main *svcutils.Main) error {
 		return err
 	}
 
-	mqConnection, err := amqp.Dial("amqp://rabbit:rabbit@172.17.0.7")
+	mqConnection, err := amqp.Dial("amqp://rabbit:rabbit@10.48.0.33")
 
 	if err != nil {
 		return fmt.Errorf("failed to dial to rabbitmq cluster, %s", err)
 	}
 
-	contactClient, conn, err := contact.NewInternalContactClient()
+	/*contactClient, conn, err := contact.NewInternalContactClient()
 
 	if err != nil {
 		return err
-	}
+	}*/
 
 	messageClient, messageConn, err := message.NewInternalMessageClient()
 
 	server.Repository = repo.NewChatRepository(db)
-	server.ContactClient = contactClient
-	server.ContactClientConn = conn
+	//server.ContactClient = contactClient
+	//server.ContactClientConn = conn
 	server.MessageClient = messageClient
 	server.MessageClientConn = messageConn
 	server.ChatMQ = queue.NewChatMQ(mqConnection)
@@ -60,7 +59,7 @@ func (server *ChatServer) Initialize(main *svcutils.Main) error {
 
 func (server *ChatServer) CleanUp() {
 
-	server.ContactClientConn.Close()
+	//server.ContactClientConn.Close()
 
 	server.MessageClientConn.Close()
 
