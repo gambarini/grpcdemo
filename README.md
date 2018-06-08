@@ -20,14 +20,12 @@ Also you will need the protoc cmd to generate the protobuffer GRPC code.
 Once minikube is on, deploy the RabbitMQ cluster:
 
 ```
-    $ cd rabbitmq
     $ ./run_rabbitmq.sh
 ```
 
 Then deploy the mongoDB cluster:
 
 ```
-    $ cd ..
     $ ./run_mongodb.sh
 ```
 
