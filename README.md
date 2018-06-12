@@ -10,32 +10,55 @@ The message routing is done throught GRPC streams connected to RabbitMQ fanout e
 scalling and availability by a RabbitMQ cluster, with replication of exchanges.
 
 
-## Running
+## Deploying
 
-The backend is setup to run on minikube. So you will need a minikube kube cluster
-running. It's recomended to set the memory to 4096 (minikube start --memory 4096).
+The backend is setup to run on minikube or GKE (Google Kubernetes Engine).
+Be sure you 'kubectl'  is configured to the context you need.
 
 Also you will need the protoc cmd to generate the protobuffer GRPC code.
 
-Once minikube is on, deploy the RabbitMQ cluster:
+First you have to deploy the NGINX ingress controller
+
+
+### NGINX Ingress Controller
+
+Cluster Permission for your user (replace marks <> with you data)
 
 ```
-    $ ./run_rabbitmq.sh
+    kubectl create clusterrolebinding <your-user-cluster-admin-binding> --clusterrole=cluster-admin --user=<your.google.cloud.email@example.org>
 ```
 
-Then deploy the mongoDB cluster:
+Mandatory resources for NGINX Ingress Controller (https://github.com/kubernetes/ingress-nginx/blob/master/docs/deploy/index.md)
 
 ```
-    $ ./run_mongodb.sh
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/mandatory.yaml
 ```
 
-Finally deploy the services:
+NGINX GKE Ingress LoadBalancer Service
 
 ```
-    $ ./run_services
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/provider/cloud-generic.yaml
 ```
 
-Now you can start the command line client, and start chatting:
+
+### Minikube
+
+
+```
+    $ ./minikube_deploy.sh
+```
+
+
+### GKE
+
+```
+    $ ./GKE_deploy.sh
+```
+
+
+## Command line Client
+
+With the backend deployed, you can start the command line client, and start chatting:
 
 ```
     $ cd cmdclient
@@ -69,5 +92,5 @@ contact discovery yet (it's part of the contact service).
 ## Future Road map
 
 - Add contact Discovery and mangement.
-- Create a Google Kubernetes Engine deployment, with actual service loadbalance.
 - A fancy web client application.
+

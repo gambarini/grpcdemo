@@ -35,6 +35,8 @@ var (
 
 func main() {
 
+	grpc.EnableTracing = true
+
 	reader = bufio.NewReader(os.Stdin)
 
 	fmt.Println("Enter your ID:")
@@ -54,13 +56,13 @@ func main() {
 	defer conn.Close()
 	defer messageConn.Close()
 
-	initializeMsgBuffer()
-
 	stream, err := chatClient.StartChat(ctx)
 
 	if err != nil {
 		log.Fatalf("failed to start chat: %v", err)
 	}
+
+	initializeMsgBuffer()
 
 	wait := make(chan interface{})
 
@@ -154,6 +156,7 @@ func initializeMsgBuffer() {
 		msg, err := stream.Recv()
 
 		if err != nil {
+
 			break
 		}
 

@@ -9,9 +9,8 @@ metadata:
 spec:
   type: NodePort
   ports:
-  - port: 80
-    nodePort: 30001
-    targetPort: 80
+  - port: 50051
+    targetPort: 50051
     name: http
   selector:
     app: chat
@@ -45,4 +44,4 @@ spec:
         args:
         - chatsvc/main.go
         ports:
-        - containerPort: 80
+        - containerPort: 50051

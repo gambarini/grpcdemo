@@ -8,7 +8,7 @@ import (
 func main() {
 
 	main := svcutils.Main{
-		ServerPort: 80,
+		ServerPort: 50051,
 		Name:       "Chat Service",
 		Server:     &server.ChatServer{},
 	}

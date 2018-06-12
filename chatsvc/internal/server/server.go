@@ -31,7 +31,7 @@ func (server *ChatServer) Initialize(main *svcutils.Main) error {
 		return err
 	}
 
-	mqConnection, err := amqp.Dial("amqp://rabbit:rabbit@10.48.0.33")
+	mqConnection, err := amqp.Dial("amqp://rabbit:rabbit@rmq-1.rmq/vh_grpcdemo")
 
 	if err != nil {
 		return fmt.Errorf("failed to dial to rabbitmq cluster, %s", err)

@@ -6,6 +6,10 @@ import (
 	"github.com/gambarini/grpcdemo/pb/chatpb"
 	"github.com/gambarini/grpcdemo/cliutils"
 	"fmt"
+	"google.golang.org/grpc/credentials"
+	"crypto/tls"
+	"google.golang.org/grpc/keepalive"
+	"time"
 )
 
 func NewInternalChatClient() (chatClient chatpb.ChatClient, conn *grpc.ClientConn, err error) {
@@ -27,15 +31,28 @@ func NewInternalChatClient() (chatClient chatpb.ChatClient, conn *grpc.ClientCon
 
 func NewExternalChatClient() (chatClient chatpb.ChatClient, conn *grpc.ClientConn) {
 
+	creds := credentials.NewTLS(&tls.Config{ InsecureSkipVerify: true})
+
+	kap := keepalive.ClientParameters{
+		PermitWithoutStream: true,
+		Time: time.Second * 20,
+	}
+
 	var opts []grpc.DialOption
 
-	opts = append(opts, grpc.WithInsecure())
+	//opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithTransportCredentials(creds))
+	opts = append(opts, grpc.WithKeepaliveParams(kap))
+	//opts = append(opts, grpc.WithStreamInterceptor(cliutils.StreamClientInterceptor))
+	//opts = append(opts, grpc.WithUnaryInterceptor(cliutils.UnaryClientInterceptor))
 
-	conn, err := grpc.Dial(cliutils.ExternalChatServiceDomain, opts...)
+	conn, err := grpc.Dial(cliutils.ExternalDomain, opts...)
 
 	if err != nil {
-		log.Fatalf("failed to dial Chat Service: %v", err)
+		log.Fatalf("Failed to dial Chat Service: %v", err)
 	}
 
 	return chatpb.NewChatClient(conn), conn
 }
+
+

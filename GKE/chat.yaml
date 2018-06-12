@@ -1,4 +1,3 @@
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -9,7 +8,7 @@ spec:
       app: chat
       tier: backend
       phase: test
-  replicas: 2
+  replicas: 1
   template:
     metadata:
       labels:
@@ -24,4 +23,25 @@ spec:
         args:
         - chatsvc/main.go
         ports:
-        - containerPort: 80
+        - containerPort: 50051
+          name: grpc
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-service
+  labels:
+    app: chat
+    tier: backend
+    phase: test
+spec:
+  type: NodePort
+  ports:
+  - port: 50051
+    targetPort: 50051
+    name: grpc
+  selector:
+    app: chat
+    tier: backend
+    phase: test

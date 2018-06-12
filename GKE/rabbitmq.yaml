@@ -1,30 +1,112 @@
-apiVersion: extensions/v1beta1
-kind: Deployment
+apiVersion: v1
+kind: Service
 metadata:
-  name: rabbitmq-deployment
+  name: rmq
 spec:
-  replicas: 3
+  ports:
+  - port: 4369
+    name: rabbitmq-epmd
+    protocol: TCP
+    protocol: TCP
+  - port: 5672
+    name: rabbitmq-main
+    protocol: TCP
+  - port: 15672
+    name: rabbitmq-management
+    protocol: TCP
+  - port: 25672
+    name: rabbitmq-node
+  clusterIP: None
+  selector:
+    app: rmq
+
+---
+
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: rmq
+spec:
+  serviceName: rmq
+  replicas: 2
+  volumeClaimTemplates:
+  - metadata:
+      name: rmq
+      annotations:
+        volume.beta.kubernetes.io/storage-class: "standard"
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi
   template:
     metadata:
       labels:
-        app: rabbitmq
+        app: rmq
     spec:
+      # prevents rmq pods running on the same nodes
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - rmq
+              topologyKey: kubernetes.io/hostname
       containers:
-      - name: rabbitmq-autocluster
-        image: gambarini/rabbitmq-autocluster:latest
+      - name: rmq
+        image: gambarini/rabbitmq-autocluster
 
-        imagePullPolicy: Always
+        lifecycle:
+          preStop:
+            exec:
+              command: ["rabbitmqctl", "stop"]
+
+        livenessProbe:
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+          exec:
+            command: ["rabbitmqctl", "node_health_check"]
+
+        readinessProbe:
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+          periodSeconds: 1
+          failureThreshold: 10
+          exec:
+            command: ["rabbitmqctl", "node_health_check"]
+
+        ports:
+        - containerPort: 4369
+        - containerPort: 5672
+        - containerPort: 15672
+        - containerPort: 25672
+
+        volumeMounts:
+          - mountPath: /var/lib/rabbitmq
+            name: rmq
+
         env:
-
-          - name: MY_POD_IP
-            valueFrom:
-              fieldRef:
-                fieldPath: status.podIP
-
-          - name: ERLANG_COOKIE
-            valueFrom:
-              secretKeyRef:
-                name: erlang.cookie
-                key: erlang.cookie
-        command:
-          - "/start.sh"
+          - name: CLUSTERED
+            value: "true"
+          - name: CLUSTER_WITH
+            value: "rmq-0"
+          - name: RABBITMQ_SERVICE_DOMAIN
+            value: "rmq.default.svc.cluster.local"
+          - name: RABBITMQ_ERLANG_COOKIE
+            value: "4E89E3934A5FAA3D41F3CD949BC72"
+          - name: RABBITMQ_USERNAME
+            value: "rabbit"
+          - name: RABBITMQ_PASSWORD
+            value: "rabbit"
+          - name: RABBITMQ_VHOST
+            value: "vh_grpcdemo"
+        resources:
+          requests:
+            memory: 100Mi
+            cpu: 100m

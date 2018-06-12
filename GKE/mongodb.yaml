@@ -41,7 +41,7 @@ metadata:
   name: mongodb-set
 spec:
   serviceName: mongodb-service
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: mongodb
@@ -79,7 +79,7 @@ spec:
   - metadata:
       name: mongo-persistent-storage
       annotations:
-              volume.beta.kubernetes.io/storage-class: standard
+              volume.beta.kubernetes.io/storage-class: "standard"
     spec:
       accessModes: ["ReadWriteOnce"]
       resources:

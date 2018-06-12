@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package = "github.com/gambarini/grpcdemo/pb/testpb";
+
+package test;
+
+service Test {
+
+    rpc TestStream(stream TestMsg) returns (stream TestMsg) {}
+    rpc TestUnary(TestMsg) returns (TestMsg) {}
+
+}
+
+message TestMsg {
+
+    string text = 1;
+
+}
