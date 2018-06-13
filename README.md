@@ -89,8 +89,11 @@ the future to check messages from other contacts.
 You must know a contact ID to send messages to that contact. There is no
 contact discovery yet (it's part of the contact service).
 
-## Future Road map
+## TODO and Road map
 
-- Add contact Discovery and mangement.
+- Add Unit Testes and Integration Testes
+- Slimmer Docker image for services (just copy the binary and run it)
+- Solve NGINX ingress 1 min connection timeout
+- Add contact discovery and mangement.
 - A fancy web client application.
 
