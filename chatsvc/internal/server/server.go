@@ -8,8 +8,6 @@ import (
 	"github.com/gambarini/grpcdemo/pb/messagepb"
 	"github.com/gambarini/grpcdemo/svcutils"
 	"github.com/gambarini/grpcdemo/dbutils"
-	"github.com/streadway/amqp"
-	"fmt"
 	"github.com/gambarini/grpcdemo/cliutils/message"
 	"github.com/gambarini/grpcdemo/pb/chatpb"
 )
@@ -31,26 +29,23 @@ func (server *ChatServer) Initialize(main *svcutils.Main) error {
 		return err
 	}
 
-	mqConnection, err := amqp.Dial("amqp://rabbit:rabbit@rmq-1.rmq/vh_grpcdemo")
-
-	if err != nil {
-		return fmt.Errorf("failed to dial to rabbitmq cluster, %s", err)
+	urls := []string{
+		"amqp://rabbit:rabbit@rmq-0.rmq/vh_grpcdemo",
+		"amqp://rabbit:rabbit@rmq-1.rmq/vh_grpcdemo",
 	}
 
-	/*contactClient, conn, err := contact.NewInternalContactClient()
+	chatMq, err := queue.NewChatMQ(urls)
 
 	if err != nil {
 		return err
-	}*/
+	}
 
 	messageClient, messageConn, err := message.NewInternalMessageClient()
 
 	server.Repository = repo.NewChatRepository(db)
-	//server.ContactClient = contactClient
-	//server.ContactClientConn = conn
 	server.MessageClient = messageClient
 	server.MessageClientConn = messageConn
-	server.ChatMQ = queue.NewChatMQ(mqConnection)
+	server.ChatMQ = chatMq
 
 	chatpb.RegisterChatServer(main.GRPCServer, server)
 
@@ -63,7 +58,9 @@ func (server *ChatServer) CleanUp() {
 
 	server.MessageClientConn.Close()
 
-	server.ChatMQ.MqConnection.Close()
+	for _, mqConn := range server.ChatMQ.MqConnections {
+		mqConn.Close()
+	}
 
 	server.Repository.DB.CleanUp()
 }
