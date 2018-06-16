@@ -35,7 +35,7 @@ func NewExternalChatClient() (chatClient chatpb.ChatClient, conn *grpc.ClientCon
 
 	kap := keepalive.ClientParameters{
 		PermitWithoutStream: true,
-		Time: time.Second * 20,
+		Time: time.Second * 30,
 	}
 
 	var opts []grpc.DialOption

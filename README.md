@@ -91,6 +91,7 @@ contact discovery yet (it's part of the contact service).
 
 ## TODO and Road map
 
+- Loadbalance connections to RabbitMQ cluster
 - Add Unit Testes and Integration Testes
 - Slimmer Docker image for services (just copy the binary and run it)
 - Solve NGINX ingress 1 min connection timeout

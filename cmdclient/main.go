@@ -1,8 +1,8 @@
 package main
 
 import (
-	clients "github.com/gambarini/grpcdemo/cliutils/chat"
-	clientMessage "github.com/gambarini/grpcdemo/cliutils/message"
+	"github.com/gambarini/grpcdemo/cliutils/chat"
+	"github.com/gambarini/grpcdemo/cliutils/message"
 	"context"
 	"fmt"
 	"bufio"
@@ -49,9 +49,9 @@ func main() {
 
 	ctx = context.TODO()
 
-	chatClient, conn := clients.NewExternalChatClient()
+	chatClient, conn := chat.NewExternalChatClient()
 
-	messageClient, messageConn = clientMessage.NewExternalMessageClient()
+	messageClient, messageConn = message.NewExternalMessageClient()
 
 	defer conn.Close()
 	defer messageConn.Close()

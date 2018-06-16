@@ -8,7 +8,7 @@ import (
 
 const (
 
-	ExternalDomain    = "35.189.55.87:443"
+	ExternalDomain    = "35.189.51.177:443"
 
 	InternalChatServiceName    = "chat-service.default.svc.cluster.local:50051"
 	InternalContactServiceName = "contact-service.default.svc.cluster.local:50051"
