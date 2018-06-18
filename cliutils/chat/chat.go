@@ -29,7 +29,7 @@ func NewInternalChatClient() (chatClient chatpb.ChatClient, conn *grpc.ClientCon
 	return chatClient, conn, nil
 }
 
-func NewExternalChatClient(dialerFunc cliutils.DialerFunc) (chatClient chatpb.ChatClient, conn *grpc.ClientConn) {
+func NewExternalChatClient(newConn bool) (chatClient chatpb.ChatClient, conn *grpc.ClientConn) {
 
 	creds := credentials.NewTLS(&tls.Config{ InsecureSkipVerify: true})
 
@@ -41,10 +41,13 @@ func NewExternalChatClient(dialerFunc cliutils.DialerFunc) (chatClient chatpb.Ch
 
 	var opts []grpc.DialOption
 
+	if !newConn {
+		opts = append(opts, grpc.WithDialer(cliutils.Dial))
+	}
+
 	//opts = append(opts, grpc.WithInsecure())
 	opts = append(opts, grpc.WithTransportCredentials(creds))
 	opts = append(opts, grpc.WithKeepaliveParams(kap))
-	opts = append(opts, grpc.WithDialer(dialerFunc))
 	//opts = append(opts, grpc.WithStreamInterceptor(cliutils.StreamClientInterceptor))
 	//opts = append(opts, grpc.WithUnaryInterceptor(cliutils.UnaryClientInterceptor))
 

@@ -17,7 +17,6 @@ import (
 	"github.com/gambarini/grpcdemo/pb/messagepb"
 	"google.golang.org/grpc"
 	"os/exec"
-	"github.com/gambarini/grpcdemo/cliutils"
 )
 
 const (
@@ -51,9 +50,9 @@ func main() {
 
 	ctx = context.Background()
 
-	chatClient, conn := chat.NewExternalChatClient(cliutils.Dial)
+	chatClient, conn := chat.NewExternalChatClient(false)
 
-	messageClient, messageConn = message.NewExternalMessageClient(cliutils.Dial)
+	messageClient, messageConn = message.NewExternalMessageClient(false)
 
 	defer conn.Close()
 	defer messageConn.Close()
