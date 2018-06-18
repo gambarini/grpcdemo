@@ -17,6 +17,7 @@ import (
 	"github.com/gambarini/grpcdemo/pb/messagepb"
 	"google.golang.org/grpc"
 	"os/exec"
+	"github.com/gambarini/grpcdemo/cliutils"
 )
 
 const (
@@ -31,6 +32,7 @@ var (
 	messageConn    *grpc.ClientConn
 	reader         *bufio.Reader
 	bufferMessages []string
+
 )
 
 func main() {
@@ -47,11 +49,11 @@ func main() {
 
 	toID = readInput(reader)
 
-	ctx = context.TODO()
+	ctx = context.Background()
 
-	chatClient, conn := chat.NewExternalChatClient()
+	chatClient, conn := chat.NewExternalChatClient(cliutils.Dial)
 
-	messageClient, messageConn = message.NewExternalMessageClient()
+	messageClient, messageConn = message.NewExternalMessageClient(cliutils.Dial)
 
 	defer conn.Close()
 	defer messageConn.Close()

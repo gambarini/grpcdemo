@@ -28,7 +28,7 @@ func NewInternalMessageClient() (contactClient messagepb.MessageClient, conn *gr
 	return contactClient, conn, nil
 }
 
-func NewExternalMessageClient() (messageClient messagepb.MessageClient, conn *grpc.ClientConn) {
+func NewExternalMessageClient(dialerFunc cliutils.DialerFunc) (messageClient messagepb.MessageClient, conn *grpc.ClientConn) {
 
 	creds := credentials.NewTLS(&tls.Config{ InsecureSkipVerify: true})
 
@@ -36,6 +36,7 @@ func NewExternalMessageClient() (messageClient messagepb.MessageClient, conn *gr
 
 	//opts = append(opts, grpc.WithInsecure())
 	opts = append(opts, grpc.WithTransportCredentials(creds))
+	opts = append(opts, grpc.WithDialer(dialerFunc))
 	//opts = append(opts, grpc.WithStreamInterceptor(cliutils.StreamClientInterceptor))
 	//opts = append(opts, grpc.WithUnaryInterceptor(cliutils.UnaryClientInterceptor))
 

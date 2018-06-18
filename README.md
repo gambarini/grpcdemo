@@ -40,6 +40,19 @@ NGINX GKE Ingress LoadBalancer Service
     kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/provider/cloud-generic.yaml
 ```
 
+NGINX nginx-configuration ConfigMap
+
+```
+    data:
+      client-body-timeout: "3600"
+      client-header-timeout: "3600"
+      error-log-level: info
+      keep-alive: "3600"
+      proxy-buffering: "off"
+      proxy-request-buffering: "off"
+      proxy-stream-timeout: "3600"
+      ssl-session-timeout: "3600"
+```
 
 ### Minikube
 
@@ -91,10 +104,11 @@ contact discovery yet (it's part of the contact service).
 
 ## TODO and Road map
 
-- Loadbalance connections to RabbitMQ cluster
+- Better Logging, with request correlationID
 - Add Unit Testes and Integration Testes
 - Slimmer Docker image for services (just copy the binary and run it)
 - Solve NGINX ingress 1 min connection timeout
 - Add contact discovery and mangement.
+- JWT token authentication
 - A fancy web client application.
 

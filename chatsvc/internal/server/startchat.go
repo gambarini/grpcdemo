@@ -8,8 +8,8 @@ import (
 	"github.com/streadway/amqp"
 	"encoding/json"
 	"github.com/gambarini/grpcdemo/chatsvc/internal/repo"
-	"golang.org/x/net/context"
 	"github.com/gambarini/grpcdemo/pb/messagepb"
+	"github.com/gambarini/grpcdemo/cliutils/message"
 )
 
 func (server *ChatServer) StartChat(stream chatpb.Chat_StartChatServer) error {
@@ -17,7 +17,17 @@ func (server *ChatServer) StartChat(stream chatpb.Chat_StartChatServer) error {
 	var streamContactID string
 	disconnect := make(chan int)
 
-	storeMessageStream, err := server.MessageClient.StoreMessages(context.TODO())
+	messageClient, messageConn, err := message.NewInternalMessageClient()
+
+	if err != nil {
+		log.Printf("Failed to dial to message service: %s", err)
+		endChat(disconnect, server.Repository, streamContactID)
+		return fmt.Errorf("failed to dial to message service: %s", err)
+	}
+
+	defer messageConn.Close()
+
+	storeMessageStream, err := messageClient.StoreMessages(stream.Context())
 
 	if err != nil {
 		log.Printf("Failed to connect to message store: %s", err)
