@@ -37,7 +37,7 @@ func (server *ContactsServer) StoreContacts(stream contactpb.Contacts_StoreConta
 
 	for {
 
-		contact, err := stream.Recv()
+		store, err := stream.Recv()
 
 		if err == io.EOF {
 			log.Printf("Received EOF: %s", err)
@@ -49,28 +49,41 @@ func (server *ContactsServer) StoreContacts(stream contactpb.Contacts_StoreConta
 			return err
 		}
 
-		log.Printf("Contact to store: %v", contact)
+		log.Printf("Contact to store: %v", store.Contact)
 
-		server.ContactRepository.StoreContact(contact)
+		return server.ContactRepository.StoreContact(store.ListContactId, repo.Contact{
+			ID:   store.Contact.Id,
+			Name: store.Contact.Name,
+		})
 
 	}
 }
 
-func (server *ContactsServer) ListContacts(filterContact *contactpb.Contact, stream contactpb.Contacts_ListContactsServer) error {
+func (server *ContactsServer) ListContacts(filterContact *contactpb.Filter, stream contactpb.Contacts_ListContactsServer) error {
 
-	contact, err := server.ContactRepository.FindContact(filterContact.Id)
+	items := make(chan repo.Item, 10)
+	abort := make(chan bool)
 
-	if err != nil {
-		return err
+	defer close(abort)
+
+	go server.ContactRepository.FindContact(filterContact.ListContactId, items, abort)
+
+	for item := range items {
+
+		if item.Err != nil {
+			return item.Err
+		}
+
+		err := stream.Send(&contactpb.Contact{
+			Id:   item.Contact.ID,
+			Name: item.Contact.Name,
+		})
+
+		if err != nil {
+			abort <- true
+			return err
+		}
 	}
 
-	log.Printf("Contact found: %v", contact)
-
-	err = stream.Send(contact)
-
-	if err != nil {
-		return err
-	}
-
-	return io.EOF
+	return nil
 }

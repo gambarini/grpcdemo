@@ -8,12 +8,10 @@ import (
 func main() {
 
 	main := svcutils.Main{
-		ServerPort:     50051,
-		Name:           "Contact Service",
-		Server: &server.ContactsServer{},
+		ServerPort: 50051,
+		Name:       "Contact Service",
+		Server:     &server.ContactsServer{},
 	}
 
 	main.Run()
 }
-
-

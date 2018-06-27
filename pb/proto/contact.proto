@@ -12,7 +12,7 @@ service Contacts {
 }
 
 message StoreContact {
-    string contact_id = 1;
+    string list_contact_id = 1;
     Contact contact = 2;
 }
 
@@ -25,7 +25,7 @@ message Contact {
 }
 
 message Filter {
-    string contact_id = 1;
+    string list_contact_id = 1;
 }
 
 enum ContactType {
