@@ -7,8 +7,6 @@ import (
 
 	"github.com/gambarini/grpcdemo/pb/messagepb"
 	"log"
-	"google.golang.org/grpc/credentials"
-	"crypto/tls"
 )
 
 func NewInternalMessageClient() (contactClient messagepb.MessageClient, conn *grpc.ClientConn, err error) {
@@ -28,22 +26,18 @@ func NewInternalMessageClient() (contactClient messagepb.MessageClient, conn *gr
 	return contactClient, conn, nil
 }
 
-func NewExternalMessageClient(newConn bool) (messageClient messagepb.MessageClient, conn *grpc.ClientConn) {
+func NewExternalMessageClient() (messageClient messagepb.MessageClient, conn *grpc.ClientConn) {
 
-	creds := credentials.NewTLS(&tls.Config{ InsecureSkipVerify: true})
+	//creds := credentials.NewTLS(&tls.Config{ InsecureSkipVerify: true})
 
 	var opts []grpc.DialOption
 
-	if !newConn {
-		opts = append(opts, grpc.WithDialer(cliutils.Dial))
-	}
-
-	//opts = append(opts, grpc.WithInsecure())
-	opts = append(opts, grpc.WithTransportCredentials(creds))
+	opts = append(opts, grpc.WithInsecure())
+	//opts = append(opts, grpc.WithTransportCredentials(creds))
 	//opts = append(opts, grpc.WithStreamInterceptor(cliutils.StreamClientInterceptor))
 	//opts = append(opts, grpc.WithUnaryInterceptor(cliutils.UnaryClientInterceptor))
 
-	conn, err := grpc.Dial(cliutils.ExternalDomain, opts...)
+	conn, err := grpc.Dial(cliutils.ExternalDomainMessage, opts...)
 
 	if err != nil {
 		log.Fatalf("failed to dial Message Service: %v", err)

@@ -41,7 +41,7 @@ metadata:
   name: mongodb-set
 spec:
   serviceName: mongodb-service
-  replicas: 3
+  replicas: 2
   selector:
     matchLabels:
       app: mongodb
@@ -84,4 +84,4 @@ spec:
       accessModes: ["ReadWriteOnce"]
       resources:
         requests:
-          storage: 1Gi
+          storage: 10Gi

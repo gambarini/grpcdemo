@@ -36,7 +36,7 @@ func (repo *MessageRepository) GetCollection(contactID string) (*mgo.Session, *m
 
 	session := repo.DB.GetSession()
 
-	return session, session.DB("grpcdemo").C(contactID)
+	return session, session.DB("message").C(contactID)
 }
 
 func NewMessageRepository(db dbutils.DB) *MessageRepository {

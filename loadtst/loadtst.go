@@ -37,8 +37,8 @@ func chatExecute(AID, BID string, idx int,  wg *sync.WaitGroup) {
 
 	ctx := context.TODO()
 
-	chatClientA, connA := chat.NewExternalChatClient(true)
-	chatClientB, connB := chat.NewExternalChatClient(true)
+	chatClientA, connA := chat.NewExternalChatClient()
+	chatClientB, connB := chat.NewExternalChatClient()
 
 	defer connA.Close()
 	defer connB.Close()

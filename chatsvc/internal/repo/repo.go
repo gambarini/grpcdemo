@@ -29,7 +29,7 @@ func (repo *ChatRepository) GetCollection() (*mgo.Session, *mgo.Collection) {
 
 	session := repo.DB.GetSession()
 
-	return session, session.DB("grpcdemo").C("Connection")
+	return session, session.DB("chat").C("Connection")
 }
 
 func (repo *ChatRepository) AddChatConnection(contactID, Source string) (chatConnection *ChatConnection, err error) {

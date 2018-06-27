@@ -23,8 +23,9 @@ func (server *ChatServer) Initialize(main *svcutils.Main) error {
 	}
 
 	urls := []string{
-		"amqp://rabbit:rabbit@rmq-0.rmq/vh_grpcdemo",
-		"amqp://rabbit:rabbit@rmq-1.rmq/vh_grpcdemo",
+		//"amqp://rabbit:rabbit@rmq-0.rmq/vh_grpcdemo",
+		//"amqp://rabbit:rabbit@rmq-1.rmq/vh_grpcdemo",
+		"amqp://guest:guest@rabbitmq.rabbitmq.svc.cluster.local:5672",
 	}
 
 	chatMq, err := queue.NewChatMQ(urls)

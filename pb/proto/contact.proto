@@ -6,9 +6,14 @@ package contact;
 
 service Contacts {
 
-    rpc StoreContacts(stream Contact) returns (stream Contact) {}
-    rpc ListContacts(Contact) returns (stream Contact) {}
+    rpc StoreContacts(stream StoreContact) returns (stream Contact) {}
+    rpc ListContacts(Filter) returns (stream Contact) {}
 
+}
+
+message StoreContact {
+    string contact_id = 1;
+    Contact contact = 2;
 }
 
 message Contact {
@@ -17,6 +22,10 @@ message Contact {
     string name = 2;
     ContactType type = 3;
 
+}
+
+message Filter {
+    string contact_id = 1;
 }
 
 enum ContactType {

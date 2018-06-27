@@ -27,7 +27,7 @@ func (repo *ContactRepository) StoreContact(contact *contactpb.Contact) error {
 
 	defer session.Close()
 
-	storeContacts := session.DB("grpcdemo").C("contact")
+	storeContacts := session.DB("contact").C("contact")
 
 	return storeContacts.Insert(contact)
 
@@ -39,7 +39,7 @@ func (repo *ContactRepository) FindContact(id string) (contact *contactpb.Contac
 
 	defer session.Close()
 
-	storeContacts := session.DB("grpcdemo").C("contact")
+	storeContacts := session.DB("contact").C("contact")
 
 	contact = &contactpb.Contact{}
 	err = storeContacts.Find(bson.M{"id": id}).One(contact)

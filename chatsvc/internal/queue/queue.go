@@ -63,6 +63,8 @@ func (mq *ChatMQ) GetConnection() *amqp.Connection {
 
 	mq.roundRobinLock.Unlock()
 
+
+
 	return mqConn
 }
 

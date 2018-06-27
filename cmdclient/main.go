@@ -50,9 +50,10 @@ func main() {
 
 	ctx = context.Background()
 
-	chatClient, conn := chat.NewExternalChatClient(false)
+	chatClient, conn := chat.NewExternalChatClient()
 
-	messageClient, messageConn = message.NewExternalMessageClient(false)
+	messageClient, messageConn = message.NewExternalMessageClient()
+
 
 	defer conn.Close()
 	defer messageConn.Close()

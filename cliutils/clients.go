@@ -4,40 +4,16 @@ import (
 	"google.golang.org/grpc"
 	"log"
 	"golang.org/x/net/context"
-	"net"
-	"time"
 )
 
 const (
-	ExternalDomain = "35.189.51.177:443"
+	ExternalDomainChat = "192.168.99.100:30001"
+	ExternalDomainMessage = "192.168.99.100:30002"
 
 	InternalChatServiceName    = "chat-service.default.svc.cluster.local:50051"
 	InternalContactServiceName = "contact-service.default.svc.cluster.local:50051"
 	InternalMessageServiceName = "message-service.default.svc.cluster.local:50051"
 )
-
-var (
-	Conn net.Conn
-)
-
-
-func Dial(x string, d time.Duration) (net.Conn, error) {
-
-	if Conn != nil {
-		log.Println("Connection available. Reusing it...")
-		return Conn, nil
-	}
-
-	log.Println("Dialing for new server connection.")
-	Conn, err := net.Dial("tcp", ExternalDomain)
-
-
-	if err != nil {
-		return nil, err
-	}
-
-	return Conn, nil
-}
 
 func StreamClientInterceptor(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 

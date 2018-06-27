@@ -1,112 +1,147 @@
 apiVersion: v1
-kind: Service
+kind: Namespace
 metadata:
-  name: rmq
+  name: rabbitmq
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rabbitmq
+  namespace: rabbitmq
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: endpoint-reader
+  namespace: rabbitmq
+rules:
+- apiGroups: [""]
+  resources: ["endpoints"]
+  verbs: ["get"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: endpoint-reader
+  namespace: rabbitmq
+subjects:
+- kind: ServiceAccount
+  name: rabbitmq
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: endpoint-reader
+---
+kind: Service
+apiVersion: v1
+metadata:
+  namespace: rabbitmq
+  name: rabbitmq
+  labels:
+    app: rabbitmq
+    type: LoadBalancer
 spec:
+  type: NodePort
   ports:
-  - port: 4369
-    name: rabbitmq-epmd
-    protocol: TCP
-    protocol: TCP
-  - port: 5672
-    name: rabbitmq-main
-    protocol: TCP
-  - port: 15672
-    name: rabbitmq-management
-    protocol: TCP
-  - port: 25672
-    name: rabbitmq-node
-  clusterIP: None
+   - name: http
+     protocol: TCP
+     port: 15672
+     targetPort: 15672
+     nodePort: 31672
+   - name: amqp
+     protocol: TCP
+     port: 5672
+     targetPort: 5672
+     nodePort: 30672
   selector:
-    app: rmq
+    app: rabbitmq
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rabbitmq-config
+  namespace: rabbitmq
+data:
+  enabled_plugins: |
+      [rabbitmq_management,rabbitmq_peer_discovery_k8s].
+  rabbitmq.conf: |
+      ## Clustering
+      cluster_formation.peer_discovery_backend  = rabbit_peer_discovery_k8s
+      cluster_formation.k8s.host = kubernetes.default.svc.cluster.local
+      cluster_formation.k8s.address_type = ip
+      cluster_formation.node_cleanup.interval = 10
+      # Set to false if automatic removal of unknown/absent nodes
+      # is desired. This can be dangerous, see
+      #  * http://www.rabbitmq.com/cluster-formation.html#node-health-checks-and-cleanup
+      #  * https://groups.google.com/forum/#!msg/rabbitmq-users/wuOfzEywHXo/k8z_HWIkBgAJ
+      cluster_formation.node_cleanup.only_log_warning = true
+      cluster_partition_handling = autoheal
+      ## queue master locator
+      queue_master_locator=min-masters
+      ## See http://www.rabbitmq.com/access-control.html#loopback-users
+      loopback_users.guest = false
 
 ---
-
 apiVersion: apps/v1beta1
 kind: StatefulSet
 metadata:
-  name: rmq
+  name: rabbitmq
+  namespace: rabbitmq
 spec:
-  serviceName: rmq
+  serviceName: rabbitmq
   replicas: 2
-  volumeClaimTemplates:
-  - metadata:
-      name: rmq
-      annotations:
-        volume.beta.kubernetes.io/storage-class: "standard"
-    spec:
-      accessModes: ["ReadWriteOnce"]
-      resources:
-        requests:
-          storage: 10Gi
   template:
     metadata:
       labels:
-        app: rmq
+        app: rabbitmq
     spec:
-      # prevents rmq pods running on the same nodes
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - rmq
-              topologyKey: kubernetes.io/hostname
+      serviceAccountName: rabbitmq
+      terminationGracePeriodSeconds: 10
       containers:
-      - name: rmq
-        image: gambarini/rabbitmq-autocluster
-        imagePullPolicy: Never
-        lifecycle:
-          preStop:
-            exec:
-              command: ["rabbitmqctl", "stop"]
-
-        livenessProbe:
-          initialDelaySeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 30
-          exec:
-            command: ["rabbitmqctl", "node_health_check"]
-
-        readinessProbe:
-          initialDelaySeconds: 10
-          timeoutSeconds: 5
-          periodSeconds: 1
-          failureThreshold: 10
-          exec:
-            command: ["rabbitmqctl", "node_health_check"]
-
-        ports:
-        - containerPort: 4369
-        - containerPort: 5672
-        - containerPort: 15672
-        - containerPort: 25672
-
+      - name: rabbitmq-k8s
+        image: rabbitmq:3.7
         volumeMounts:
-          - mountPath: /var/lib/rabbitmq
-            name: rmq
-
+          - name: config-volume
+            mountPath: /etc/rabbitmq
+        ports:
+          - name: http
+            protocol: TCP
+            containerPort: 15672
+          - name: amqp
+            protocol: TCP
+            containerPort: 5672
+        livenessProbe:
+          exec:
+            command: ["rabbitmqctl", "status"]
+          initialDelaySeconds: 60
+          periodSeconds: 60
+          timeoutSeconds: 10
+        readinessProbe:
+          exec:
+            command: ["rabbitmqctl", "status"]
+          initialDelaySeconds: 20
+          periodSeconds: 60
+          timeoutSeconds: 10
+        imagePullPolicy: Always
         env:
-          - name: CLUSTERED
+          - name: MY_POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          - name: RABBITMQ_USE_LONGNAME
             value: "true"
-          - name: CLUSTER_WITH
-            value: "rmq-0"
-          - name: RABBITMQ_SERVICE_DOMAIN
-            value: "rmq.default.svc.cluster.local"
+          - name: RABBITMQ_NODENAME
+            value: "rabbit@$(MY_POD_IP)"
+          - name: K8S_SERVICE_NAME
+            value: "rabbitmq"
           - name: RABBITMQ_ERLANG_COOKIE
-            value: "4E89E3934A5FAA3D41F3CD949BC72"
-          - name: RABBITMQ_USERNAME
-            value: "rabbit"
-          - name: RABBITMQ_PASSWORD
-            value: "rabbit"
-          - name: RABBITMQ_VHOST
-            value: "vh_grpcdemo"
-        resources:
-          requests:
-            memory: 100Mi
-            cpu: 100m
+            value: "mycookie"
+      volumes:
+        - name: config-volume
+          configMap:
+            name: rabbitmq-config
+            items:
+            - key: rabbitmq.conf
+              path: rabbitmq.conf
+            - key: enabled_plugins
+              path: enabled_plugins
