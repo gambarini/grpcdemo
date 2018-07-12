@@ -9,6 +9,7 @@ import (
 const (
 	ExternalDomainChat = "192.168.99.100:30001"
 	ExternalDomainMessage = "192.168.99.100:30002"
+	ExternalDomainContact = "192.168.99.100:30003"
 
 	InternalChatServiceName    = "chat-service.default.svc.cluster.local:50051"
 	InternalContactServiceName = "contact-service.default.svc.cluster.local:50051"
