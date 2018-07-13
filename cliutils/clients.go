@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	ExternalDomainChat = "192.168.99.100:30001"
-	ExternalDomainMessage = "192.168.99.100:30002"
-	ExternalDomainContact = "192.168.99.100:30003"
+	ExternalDomainChat = "a3c57f13c85d011e8ab5c126f33fd190-1203076323.us-east-1.elb.amazonaws.com:443"
+	ExternalDomainMessage = "a3c57f13c85d011e8ab5c126f33fd190-1203076323.us-east-1.elb.amazonaws.com:443"
+	ExternalDomainContact = "a3c57f13c85d011e8ab5c126f33fd190-1203076323.us-east-1.elb.amazonaws.com:443"
 
 	InternalChatServiceName    = "chat-service.default.svc.cluster.local:50051"
 	InternalContactServiceName = "contact-service.default.svc.cluster.local:50051"

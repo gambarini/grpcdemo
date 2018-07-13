@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"google.golang.org/grpc/keepalive"
 	"time"
+	"google.golang.org/grpc/credentials"
+	"crypto/tls"
 )
 
 func NewInternalChatClient() (chatClient chatpb.ChatClient, conn *grpc.ClientConn, err error) {
@@ -29,7 +31,7 @@ func NewInternalChatClient() (chatClient chatpb.ChatClient, conn *grpc.ClientCon
 
 func NewExternalChatClient() (chatClient chatpb.ChatClient, conn *grpc.ClientConn) {
 
-	//creds := credentials.NewTLS(&tls.Config{ InsecureSkipVerify: true})
+	creds := credentials.NewTLS(&tls.Config{ InsecureSkipVerify: true})
 
 	kap := keepalive.ClientParameters{
 		PermitWithoutStream: true,
@@ -39,8 +41,8 @@ func NewExternalChatClient() (chatClient chatpb.ChatClient, conn *grpc.ClientCon
 
 	var opts []grpc.DialOption
 
-	opts = append(opts, grpc.WithInsecure())
-	//opts = append(opts, grpc.WithTransportCredentials(creds))
+	//opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithTransportCredentials(creds))
 	opts = append(opts, grpc.WithKeepaliveParams(kap))
 	//opts = append(opts, grpc.WithStreamInterceptor(cliutils.StreamClientInterceptor))
 	//opts = append(opts, grpc.WithUnaryInterceptor(cliutils.UnaryClientInterceptor))

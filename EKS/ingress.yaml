@@ -1,0 +1,25 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/grpc-backend: "true"
+    ingress.kubernetes.io/proxy-connect-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+  name: service-ingress
+  namespace: default
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /chat.Chat
+        backend:
+          serviceName: chat-service
+          servicePort: grpc
+      - path: /message.Message
+        backend:
+          serviceName: message-service
+          servicePort: grpc

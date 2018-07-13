@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: message
+spec:
+  selector:
+    matchLabels:
+      app: message
+      tier: backend
+      phase: test
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: message
+        tier: backend
+        phase: test
+    spec:
+      containers:
+      - name: chat
+        image: gambarini/grpc-demo
+        imagePullPolicy: Always
+        args:
+        - messagesvc/main.go
+        ports:
+        - containerPort: 50051
+          name: grpc
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: message-service
+  labels:
+    app: message
+    tier: backend
+    phase: test
+spec:
+  type: NodePort
+  ports:
+  - port: 50051
+    targetPort: 50051
+    name: grpc
+  selector:
+    app: message
+    tier: backend
+    phase: test

@@ -3,11 +3,6 @@
 docker build -t gambarini/grpc-demo .
 docker push gambarini/grpc-demo
 
-cd rabbitmq
-docker build . -t gambarini/rabbitmq-autocluster
-docker push gambarini/rabbitmq-autocluster
-cd ..
-
 kubectl create clusterrolebinding gambarini-admin-binding --clusterrole=cluster-admin --user=gambarini@gmail.com
 
 kubectl apply -f GKE/rabbitmq.yaml

@@ -7,6 +7,8 @@ import (
 
 	"github.com/gambarini/grpcdemo/pb/messagepb"
 	"log"
+	"google.golang.org/grpc/credentials"
+	"crypto/tls"
 )
 
 func NewInternalMessageClient() (contactClient messagepb.MessageClient, conn *grpc.ClientConn, err error) {
@@ -28,12 +30,12 @@ func NewInternalMessageClient() (contactClient messagepb.MessageClient, conn *gr
 
 func NewExternalMessageClient() (messageClient messagepb.MessageClient, conn *grpc.ClientConn) {
 
-	//creds := credentials.NewTLS(&tls.Config{ InsecureSkipVerify: true})
+	creds := credentials.NewTLS(&tls.Config{ InsecureSkipVerify: true})
 
 	var opts []grpc.DialOption
 
-	opts = append(opts, grpc.WithInsecure())
-	//opts = append(opts, grpc.WithTransportCredentials(creds))
+	//opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithTransportCredentials(creds))
 	//opts = append(opts, grpc.WithStreamInterceptor(cliutils.StreamClientInterceptor))
 	//opts = append(opts, grpc.WithUnaryInterceptor(cliutils.UnaryClientInterceptor))
 

@@ -5,10 +5,6 @@ eval $(minikube docker-env)
 
 docker build -t gambarini/grpc-demo .
 
-cd rabbitmq
-docker build . -t gambarini/rabbitmq-autocluster
-cd ..
-
 kubectl create clusterrolebinding gambarini-admin-binding --clusterrole=cluster-admin --user=gambarini@gmail.com
 
 kubectl apply -f minikube/rabbitmq.yaml

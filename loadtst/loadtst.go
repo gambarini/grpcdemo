@@ -14,7 +14,7 @@ import (
 
 var (
 	MsgPerContactTotal = 500
-	ChatTotal          = 100
+	ChatTotal          = 1
 	MsgPerSec          = time.Second / 3
 )
 
